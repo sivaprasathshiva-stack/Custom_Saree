@@ -1,6 +1,6 @@
 import { PageIntro } from "@/components/marketing/page-intro";
 
-export const metadata = { title: "Quality & Certification — SĀRĪ Studio" };
+export const metadata = { title: "Quality & Certification — VELVOREA" };
 
 export default function Page() {
   return (

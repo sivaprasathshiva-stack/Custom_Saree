@@ -1,6 +1,6 @@
 import { PageIntro } from "@/components/marketing/page-intro";
 
-export const metadata = { title: "Production Tracker — SĀRĪ Studio" };
+export const metadata = { title: "Production Tracker — VELVOREA" };
 
 export default function Page() {
   return (

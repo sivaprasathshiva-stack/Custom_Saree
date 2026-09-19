@@ -21,7 +21,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SĀRĪ STUDIO — Custom Silk Saree Manufacturing",
+  title: "VELVOREA — Custom Silk Saree Manufacturing",
   description:
     "A digital studio for creating bespoke silk sarees, from material and colour to motif, border and pallu — physically manufactured to your specification.",
 };

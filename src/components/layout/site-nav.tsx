@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -21,8 +22,16 @@ export function SiteNav() {
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-ivory/90 backdrop-blur">
       <div className="mx-auto flex h-18 max-w-[1600px] items-center justify-between px-6 py-4 md:px-10">
-        <Link href="/" className="font-display text-2xl tracking-wide">
-          SĀRĪ <span className="text-gray">Studio</span>
+        <Link href="/" className="flex items-center gap-2.5">
+          <Image
+            src="/assets/brand/velvorea/velvorea-logo-mark.png"
+            alt="VELVOREA"
+            width={40}
+            height={40}
+            className="h-9 w-9 object-contain"
+            priority
+          />
+          <span className="font-display text-2xl tracking-wide">VELVOREA</span>
         </Link>
 
         <nav className="hidden items-center gap-8 lg:flex">

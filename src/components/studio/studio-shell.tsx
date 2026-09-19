@@ -268,7 +268,7 @@ export function StudioShell() {
       {/* Top bar */}
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-line-dark px-4 md:px-6">
         <div className="flex items-center gap-4 md:gap-6">
-          <span className="font-display text-lg tracking-wide">SĀRĪ Studio</span>
+          <span className="font-display text-lg tracking-wide">VELVOREA</span>
           <span className="hidden h-4 w-px bg-line-dark md:block" />
           <div className="hidden flex-col leading-tight md:flex">
             <input

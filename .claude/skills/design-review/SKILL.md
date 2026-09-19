@@ -1,9 +1,9 @@
 ---
 name: design-review
-description: Structured QA pass for a completed or near-complete SĀRĪ Studio page or component. Use after implementing a page from silk-design/frontend-design, before considering it done, or when the user asks for a design/UX review of existing UI. Checks visual craft, UX completeness, technical correctness and brand fit together, and produces a pass/revise verdict per criterion.
+description: Structured QA pass for a completed or near-complete VELVOREA page or component. Use after implementing a page from silk-design/frontend-design, before considering it done, or when the user asks for a design/UX review of existing UI. Checks visual craft, UX completeness, technical correctness and brand fit together, and produces a pass/revise verdict per criterion.
 ---
 
-# Design Review — SĀRĪ Studio
+# Design Review — VELVOREA
 
 Run this after building or materially changing a page. It is a checklist skill,
 not a visual-taste skill — the taste calls come from `silk-design` and

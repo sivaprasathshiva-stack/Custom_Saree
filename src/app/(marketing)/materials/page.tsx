@@ -3,7 +3,7 @@ import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { Button } from "@/components/ui/button";
 import { materials } from "@/components/studio/studio-data";
 
-export const metadata = { title: "Silk Library — SĀRĪ Studio" };
+export const metadata = { title: "Silk Library — VELVOREA" };
 
 export default function MaterialsPage() {
   return (

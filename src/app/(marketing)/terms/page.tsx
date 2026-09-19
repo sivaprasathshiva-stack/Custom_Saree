@@ -1,4 +1,4 @@
-export const metadata = { title: "Terms — SĀRĪ Studio" };
+export const metadata = { title: "Terms — VELVOREA" };
 
 export default function Page() {
   return (

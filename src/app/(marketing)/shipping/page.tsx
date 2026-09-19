@@ -1,4 +1,4 @@
-export const metadata = { title: "Shipping — SĀRĪ Studio" };
+export const metadata = { title: "Shipping — VELVOREA" };
 
 export default function Page() {
   return (

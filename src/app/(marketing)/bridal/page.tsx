@@ -4,7 +4,7 @@ import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { studioPresets } from "@/components/studio/studio-data";
 
 export const metadata = {
-  title: "Bridal — SĀRĪ Studio",
+  title: "Bridal — VELVOREA",
   description:
     "A bridal Kanchipuram starting point — temple border, premium zari — designed in the Textile Studio and woven in Elampillai, Salem.",
 };

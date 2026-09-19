@@ -1,9 +1,9 @@
 ---
 name: silk-design
-description: Project-specific visual identity doctrine for the SĀRĪ Studio silk saree manufacturing platform. Load this before any design or UI work on this project — it fixes brand-specific decisions (palette, type, heritage treatment, manufacturing language) that the general-purpose frontend-design skill deliberately leaves open. Use together with frontend-design, not instead of it.
+description: Project-specific visual identity doctrine for the VELVOREA silk saree manufacturing platform. Load this before any design or UI work on this project — it fixes brand-specific decisions (palette, type, heritage treatment, manufacturing language) that the general-purpose frontend-design skill deliberately leaves open. Use together with frontend-design, not instead of it.
 ---
 
-# Silk Design — SĀRĪ Studio Visual Doctrine
+# Silk Design — VELVOREA Visual Doctrine
 
 This skill answers the brand-specific questions that `frontend-design` intentionally
 leaves to the brief. Where `frontend-design` sets *how* to design (avoid templated
@@ -121,8 +121,8 @@ a form wizard:
   *these* weavers.
 - Generic/editorial stock (silk texture, abstract material, mood photography)
   is acceptable for atmosphere but must be tagged as such in the media
-  registry and must never appear near a caption implying it depicts SĀRĪ
-  Studio's own facility, product or people.
+  registry and must never appear near a caption implying it depicts VELVOREA's
+  own facility, product or people.
 
 ## How this skill resolves conflicts
 

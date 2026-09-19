@@ -5,7 +5,7 @@
  *
  * `status: "placeholder"` renders the on-brand MediaPlaceholder component.
  * `status: "sourced"` is licensed stock used for atmosphere/editorial only —
- * it must never be captioned or implied to depict SĀRĪ Studio's own factory,
+ * it must never be captioned or implied to depict VELVOREA's own factory,
  * looms, staff, or product.
  * `status: "owned"` is real company media once supplied.
  */
@@ -156,7 +156,7 @@ export const mediaRegistry: MediaAsset[] = [
 ];
 
 /**
- * NILA — SĀRĪ Studio's fictional brand ambassador. All nine reference
+ * NILA — VELVOREA's fictional brand ambassador. All nine reference
  * images are real, supplied assets (status "owned", not placeholder), see
  * docs/brand/nila/ for the full identity system these entries point into.
  */
@@ -168,7 +168,7 @@ mediaRegistry.push(
     status: "owned",
     title: "Nila — Master Primary Reference",
     src: "/assets/brand/nila/master/nila-master-primary.png",
-    alt: "Nila, SĀRĪ Studio's fictional brand ambassador, in a gold-bordered silk saree",
+    alt: "Nila, VELVOREA's fictional brand ambassador, in a gold-bordered silk saree",
     usage: "editorial",
   },
   {

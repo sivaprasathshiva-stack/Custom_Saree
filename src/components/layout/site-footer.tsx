@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const columns = [
@@ -46,9 +47,16 @@ export function SiteFooter() {
       <div className="mx-auto max-w-[1600px] px-6 py-16 md:px-10">
         <div className="grid grid-cols-2 gap-10 border-b border-line-dark pb-14 md:grid-cols-6">
           <div className="col-span-2">
-            <p className="font-display text-2xl text-ivory">
-              SĀRĪ <span className="text-gray-light">Studio</span>
-            </p>
+            <div className="flex items-center gap-2.5">
+              <Image
+                src="/assets/brand/velvorea/velvorea-logo-mark.png"
+                alt="VELVOREA"
+                width={44}
+                height={44}
+                className="h-10 w-10 object-contain"
+              />
+              <p className="font-display text-2xl text-ivory">VELVOREA</p>
+            </div>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-stone-light/80">
               A digital studio for designing bespoke silk sarees, physically manufactured
               to your specification.
@@ -74,7 +82,7 @@ export function SiteFooter() {
         </div>
 
         <div className="flex flex-col items-start justify-between gap-4 pt-8 text-sm text-stone md:flex-row md:items-center">
-          <span>© {new Date().getFullYear()} Sārī Studio. Content shown is placeholder demo data.</span>
+          <span>© {new Date().getFullYear()} VELVOREA. Content shown is placeholder demo data.</span>
           <div className="flex gap-6">
             <Link href="/terms" className="hover:text-ivory">Terms</Link>
             <Link href="/privacy" className="hover:text-ivory">Privacy</Link>
