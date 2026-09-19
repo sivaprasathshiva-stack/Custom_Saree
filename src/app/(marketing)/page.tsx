@@ -17,13 +17,46 @@ const MATERIAL_MEDIA_ID: Record<string, string> = {
 };
 
 const process = [
-  { n: "01", label: "Idea" },
-  { n: "02", label: "Digital Design" },
-  { n: "03", label: "Technical Review" },
-  { n: "04", label: "Sample" },
-  { n: "05", label: "Weaving" },
-  { n: "06", label: "Quality Check" },
-  { n: "07", label: "Delivery" },
+  {
+    n: "01",
+    label: "Idea",
+    description: "Start from a blank canvas, a template, or the bridal preset.",
+  },
+  {
+    n: "02",
+    label: "Digital Design",
+    description: "Configure material, colour, artwork, repeat, border, pallu and zari.",
+    href: "/studio",
+  },
+  {
+    n: "03",
+    label: "Technical Review",
+    description: "Deterministic rules check manufacturability before anything is approved.",
+  },
+  {
+    n: "04",
+    label: "Sample",
+    description: "Request a physical swatch or full sample before committing to production.",
+    href: "/sample-program",
+  },
+  {
+    n: "05",
+    label: "Weaving",
+    description: "Your approved design goes to the loom in Elampillai, Salem.",
+    href: "/craft",
+  },
+  {
+    n: "06",
+    label: "Quality Check",
+    description: "Every saree is inspected against a structured checklist before it ships.",
+    href: "/quality",
+  },
+  {
+    n: "07",
+    label: "Delivery",
+    description: "Shipped internationally, with tracking from dispatch to your door.",
+    href: "/shipping",
+  },
 ];
 
 export default function Home() {
@@ -126,17 +159,33 @@ export default function Home() {
       {/* 04 — From pixel to loom */}
       <section className="mx-auto max-w-[1600px] px-6 py-28 md:px-10">
         <SectionLabel>From Pixel to Loom</SectionLabel>
-        <div className="mt-12 flex flex-col gap-0 md:flex-row md:items-stretch">
-          {process.map((p) => (
-            <div
-              key={p.n}
-              className="group relative flex flex-1 flex-col gap-3 border-t border-line py-6 md:border-t-0 md:border-l md:px-6 md:py-0"
-            >
-              <span className="text-sm text-stone">{p.n}</span>
-              <span className="font-display text-lg">{p.label}</span>
-            </div>
-          ))}
-        </div>
+        <ol className="mt-12 flex flex-col gap-0 md:flex-row md:items-stretch">
+          {process.map((p) => {
+            const content = (
+              <>
+                <span className="text-sm text-stone">{p.n}</span>
+                <span className="font-display text-lg">{p.label}</span>
+                <span className="text-sm text-stone">{p.description}</span>
+              </>
+            );
+            const itemClass =
+              "flex flex-1 flex-col gap-2 border-t border-line py-6 md:border-t-0 md:border-l md:px-6 md:py-0";
+            return (
+              <li key={p.n} className="flex flex-1">
+                {p.href ? (
+                  <Link href={p.href} className={`group ${itemClass} transition-colors hover:border-charcoal`}>
+                    {content}
+                    <span className="mt-1 text-sm text-charcoal underline decoration-line underline-offset-4 group-hover:decoration-charcoal">
+                      Learn more
+                    </span>
+                  </Link>
+                ) : (
+                  <div className={itemClass}>{content}</div>
+                )}
+              </li>
+            );
+          })}
+        </ol>
       </section>
 
       {/* 05 — Textile Studio preview */}
