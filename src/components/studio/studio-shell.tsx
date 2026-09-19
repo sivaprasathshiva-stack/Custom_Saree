@@ -55,16 +55,28 @@ export function StudioShell() {
   // Load any previously saved design on mount (client-only — localStorage
   // isn't available during server render, so this can't be a lazy useState
   // initializer the way `versions` is; it has to run post-mount). A saved
-  // session always wins over a ?preset= link — presets are a starting
-  // point, never something that should clobber someone's in-progress work.
+  // session always wins over a ?preset=/?material= link — both are a
+  // starting point, never something that should clobber in-progress work.
   useEffect(() => {
     const saved = loadCurrentDesign();
     if (saved) {
       reset(saved);
       return;
     }
-    const presetId = new URLSearchParams(window.location.search).get("preset");
-    if (presetId) reset(createDefaultDesign(presetId));
+    const params = new URLSearchParams(window.location.search);
+    const presetId = params.get("preset");
+    if (presetId) {
+      reset(createDefaultDesign(presetId));
+      return;
+    }
+    // Material-card handoff from the homepage/materials pages, e.g.
+    // /studio?material=kan — pre-selects that silk on a fresh design
+    // without inventing a separate material-selection state.
+    const materialId = params.get("material");
+    if (materialId && materials.some((m) => m.id === materialId)) {
+      const base = createDefaultDesign();
+      reset({ ...base, materialId });
+    }
   }, [reset]);
 
   // "Saved Ns ago" ticker.

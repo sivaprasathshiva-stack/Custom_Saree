@@ -23,7 +23,8 @@ export type MediaCategory =
   | "editorial"
   | "textures"
   | "videos"
-  | "3d";
+  | "3d"
+  | "brand";
 
 export type MediaStatus = "placeholder" | "sourced" | "owned";
 
@@ -47,6 +48,10 @@ export interface MediaAsset {
   /** Placeholder guidance shown until a real/sourced asset is added */
   placeholderHint?: string;
   usage: "editorial" | "product" | "process" | "hero" | "texture";
+  /** Actual source pixel dimensions — read from the file, never estimated */
+  width?: number;
+  height?: number;
+  aspectRatio?: string;
 }
 
 /**
@@ -96,7 +101,157 @@ export const mediaRegistry: MediaAsset[] = [
     placeholderHint: "Real close-up footage of the actual Jacquard loom in use",
     usage: "process",
   },
+  {
+    id: "homepage.material.kanchipuram",
+    type: "image",
+    category: "materials",
+    status: "owned",
+    title: "Kanchipuram Silk",
+    src: "/assets/homepage/materials/kanchipuram-silk.png",
+    alt: "Kanchipuram silk textile",
+    usage: "product",
+    width: 1122,
+    height: 1402,
+    aspectRatio: "4:5",
+  },
+  {
+    id: "homepage.material.banarasi",
+    type: "image",
+    category: "materials",
+    status: "owned",
+    title: "Banarasi Silk",
+    src: "/assets/homepage/materials/banarasi-silk.png",
+    alt: "Banarasi silk textile",
+    usage: "product",
+    width: 1122,
+    height: 1402,
+    aspectRatio: "4:5",
+  },
+  {
+    id: "homepage.material.tussar",
+    type: "image",
+    category: "materials",
+    status: "owned",
+    title: "Tussar Silk",
+    src: "/assets/homepage/materials/tussar-silk.png",
+    alt: "Tussar silk textile",
+    usage: "product",
+    width: 1122,
+    height: 1402,
+    aspectRatio: "4:5",
+  },
+  {
+    id: "homepage.material.mysore",
+    type: "image",
+    category: "materials",
+    status: "owned",
+    title: "Mysore Silk",
+    src: "/assets/homepage/materials/mysore-silk.png",
+    alt: "Mysore silk textile",
+    usage: "product",
+    width: 1122,
+    height: 1402,
+    aspectRatio: "4:5",
+  },
 ];
+
+/**
+ * NILA — SĀRĪ Studio's fictional brand ambassador. All nine reference
+ * images are real, supplied assets (status "owned", not placeholder), see
+ * docs/brand/nila/ for the full identity system these entries point into.
+ */
+mediaRegistry.push(
+  {
+    id: "nila.master.primary",
+    type: "image",
+    category: "brand",
+    status: "owned",
+    title: "Nila — Master Primary Reference",
+    src: "/assets/brand/nila/master/nila-master-primary.png",
+    alt: "Nila, SĀRĪ Studio's fictional brand ambassador, in a gold-bordered silk saree",
+    usage: "editorial",
+  },
+  {
+    id: "nila.reference.front",
+    type: "image",
+    category: "brand",
+    status: "owned",
+    title: "Nila — Front Portrait Reference",
+    src: "/assets/brand/nila/master/nila-front-portrait.png",
+    alt: "Nila, front-facing portrait reference",
+    usage: "editorial",
+  },
+  {
+    id: "nila.reference.3q.left",
+    type: "image",
+    category: "brand",
+    status: "owned",
+    title: "Nila — Three-Quarter Left Reference",
+    src: "/assets/brand/nila/master/nila-3q-left.png",
+    alt: "Nila, three-quarter left facial reference",
+    usage: "editorial",
+  },
+  {
+    id: "nila.reference.3q.right",
+    type: "image",
+    category: "brand",
+    status: "owned",
+    title: "Nila — Three-Quarter Right Reference",
+    src: "/assets/brand/nila/master/nila-3q-right.png",
+    alt: "Nila, three-quarter right facial reference",
+    usage: "editorial",
+  },
+  {
+    id: "nila.reference.profile",
+    type: "image",
+    category: "brand",
+    status: "owned",
+    title: "Nila — Profile Reference",
+    src: "/assets/brand/nila/master/nila-profile.png",
+    alt: "Nila, profile facial reference",
+    usage: "editorial",
+  },
+  {
+    id: "nila.reference.fullbody",
+    type: "image",
+    category: "brand",
+    status: "owned",
+    title: "Nila — Full Body Reference",
+    src: "/assets/brand/nila/master/nila-full-body.png",
+    alt: "Nila, full-body proportion reference in a silk saree",
+    usage: "editorial",
+  },
+  {
+    id: "nila.reference.neutral",
+    type: "image",
+    category: "brand",
+    status: "owned",
+    title: "Nila — Neutral Expression Reference",
+    src: "/assets/brand/nila/master/nila-neutral-expression.png",
+    alt: "Nila, neutral expression reference",
+    usage: "editorial",
+  },
+  {
+    id: "nila.reference.smile",
+    type: "image",
+    category: "brand",
+    status: "owned",
+    title: "Nila — Natural Smile Reference",
+    src: "/assets/brand/nila/master/nila-natural-smile.png",
+    alt: "Nila, natural smile reference",
+    usage: "editorial",
+  },
+  {
+    id: "nila.reference.hair",
+    type: "image",
+    category: "brand",
+    status: "owned",
+    title: "Nila — Hair Variation Reference",
+    src: "/assets/brand/nila/master/nila-hair-variation.png",
+    alt: "Nila, hair-up and hair-down variation reference",
+    usage: "editorial",
+  }
+);
 
 export function getMedia(id: string): MediaAsset | undefined {
   return mediaRegistry.find((m) => m.id === id);

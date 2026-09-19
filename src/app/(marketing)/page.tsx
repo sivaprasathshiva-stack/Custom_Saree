@@ -1,16 +1,20 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { ArchiveGrid } from "@/components/marketing/archive-grid";
 import { materials, palette, borders } from "@/components/studio/studio-data";
+import { getMedia } from "@/lib/media-registry";
 
-const silks = [
-  { name: "Kanchipuram Pure Silk", code: "KAN-001", note: "Handloom · Zari compatible" },
-  { name: "Banarasi Silk", code: "BAN-002", note: "Jacquard · Brocade" },
-  { name: "Tussar Silk", code: "TUS-003", note: "Lightweight · Textured" },
-  { name: "Mysore Silk", code: "MYS-004", note: "Plain weave · High sheen" },
-];
+// Maps studio-data material ids to their homepage media-registry entries —
+// keeps the image mapping in one place rather than duplicating filenames.
+const MATERIAL_MEDIA_ID: Record<string, string> = {
+  kan: "homepage.material.kanchipuram",
+  ban: "homepage.material.banarasi",
+  tus: "homepage.material.tussar",
+  mys: "homepage.material.mysore",
+};
 
 const process = [
   { n: "01", label: "Idea" },
@@ -67,25 +71,54 @@ export default function Home() {
       <section className="border-y border-line bg-ivory-deep">
         <div className="mx-auto max-w-[1600px] px-6 py-24 md:px-10">
           <SectionLabel>Material Intelligence</SectionLabel>
-          <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-4">
-            {silks.map((s) => (
-              <Link
-                key={s.code}
-                href="/materials"
-                className="group flex flex-col border border-line bg-ivory transition-colors hover:border-charcoal"
-              >
-                <MediaPlaceholder label={s.name} ratio="aspect-[4/5]" />
-                <div className="flex flex-1 flex-col justify-between p-5">
-                  <div>
-                    <p className="font-display text-xl">{s.name}</p>
-                    <p className="mt-1 text-sm text-stone">{s.note}</p>
+          <div className="mt-10 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4">
+            {materials.map((m) => {
+              const media = getMedia(MATERIAL_MEDIA_ID[m.id]);
+              return (
+                <div
+                  key={m.id}
+                  className="group flex flex-col border border-line bg-ivory transition-colors hover:border-charcoal"
+                >
+                  <Link href="/materials" className="relative block aspect-[4/5] w-full overflow-hidden">
+                    {media?.src ? (
+                      <Image
+                        src={media.src}
+                        alt={media.alt}
+                        fill
+                        sizes="(min-width: 768px) 25vw, 50vw"
+                        className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <MediaPlaceholder label={m.name} ratio="aspect-[4/5]" />
+                    )}
+                  </Link>
+                  <div className="flex flex-1 flex-col justify-between p-4 sm:p-5">
+                    <div>
+                      <Link href="/materials">
+                        <p className="font-display text-lg sm:text-xl">{m.name}</p>
+                      </Link>
+                      <p className="mt-1 text-xs text-stone sm:text-sm">
+                        {m.weight} · {m.width} · {m.sheen} sheen
+                      </p>
+                    </div>
+                    <div className="mt-4 flex flex-col gap-1 text-xs sm:mt-6 sm:text-sm">
+                      <Link
+                        href="/materials"
+                        className="text-charcoal underline decoration-line underline-offset-4 group-hover:decoration-charcoal"
+                      >
+                        View specification
+                      </Link>
+                      <Link
+                        href={`/studio?material=${m.id}`}
+                        className="text-stone underline decoration-line underline-offset-4 hover:text-charcoal hover:decoration-charcoal"
+                      >
+                        Use in Studio
+                      </Link>
+                    </div>
                   </div>
-                  <p className="mt-6 text-sm text-charcoal underline decoration-line underline-offset-4 group-hover:decoration-charcoal">
-                    View specification
-                  </p>
                 </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
