@@ -1,16 +1,70 @@
-import { PageIntro } from "@/components/marketing/page-intro";
+import { SectionLabel } from "@/components/ui/section-label";
+import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/ui/back-button";
 
-export const metadata = { title: "B2B & Boutiques — VELVOREA" };
+export const metadata = {
+  title: "B2B & Boutiques — VELVOREA",
+  description: "Bulk custom saree orders for boutiques and buyers, manufactured in Elampillai, Salem.",
+};
 
-export default function Page() {
+const steps = [
+  {
+    title: "Share your requirement",
+    body: "Colourways, quantities, target price points and delivery window — send us the brief through Contact and we'll respond with what's feasible.",
+  },
+  {
+    title: "Design and technical review",
+    body: "Each colourway is built to spec and checked for manufacturability before quoting, the same review every individual Studio design goes through.",
+  },
+  {
+    title: "Sample approval",
+    body: "A physical sample is produced for sign-off before full production begins — see the Sample Program for how this works on individual orders.",
+  },
+  {
+    title: "Production and shipping",
+    body: "Once approved, the full order is woven and shipped as a batch, domestically or internationally.",
+  },
+];
+
+export default function B2BPage() {
   return (
-    <PageIntro
-      eyebrow="B2B"
-      title="Bulk orders, multiple colourways, one point of contact."
-      description="Organisation accounts, team invitations, MOQ quoting and purchase-order management for boutiques and buyers. Contact us to set up an organisation account."
-      cta={{ label: "Contact sales", href: "/contact" }}
-      heroLabel="B2B — Bulk Order Workflow"
-      heroHint="Product screenshot once the B2B portal is built"
-    />
+    <div className="bg-ivory">
+      <section className="border-b border-line px-6 py-20 md:px-10">
+        <div className="mx-auto max-w-[1600px]">
+          <BackButton className="mb-8" />
+          <SectionLabel>B2B</SectionLabel>
+          <h1 className="mt-6 max-w-2xl font-display text-5xl leading-tight md:text-6xl">
+            Bulk orders, multiple colourways, one point of contact.
+          </h1>
+          <p className="mt-6 max-w-xl text-stone">
+            For boutiques and buyers ordering more than a single saree — one design,
+            several colourways, or a full seasonal range — manufactured at the same
+            Elampillai facility as individual Studio orders.
+          </p>
+          <div className="mt-9">
+            <Button href="/contact" variant="primary">
+              Contact sales
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-[1600px] px-6 py-16 md:px-10">
+        <ol className="grid grid-cols-1 gap-px border border-line bg-line md:grid-cols-2 lg:grid-cols-4">
+          {steps.map((s, i) => (
+            <li key={s.title} className="flex flex-col gap-3 bg-ivory p-8">
+              <span className="font-mono text-xs text-stone">{String(i + 1).padStart(2, "0")}</span>
+              <p className="font-display text-xl">{s.title}</p>
+              <p className="text-sm leading-relaxed text-stone">{s.body}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-10 max-w-xl text-sm text-stone">
+          A self-service organisation account (team invitations, saved colourways,
+          purchase-order management) isn&rsquo;t built yet — for now, every B2B
+          relationship starts as a direct conversation through Contact.
+        </p>
+      </section>
+    </div>
   );
 }
