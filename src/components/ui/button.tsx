@@ -7,10 +7,10 @@ const base =
   "inline-flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] transition-colors duration-200 px-6 py-3.5 whitespace-nowrap";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-charcoal text-ivory hover:bg-charcoal-soft",
-  secondary: "border border-charcoal text-charcoal hover:bg-charcoal hover:text-ivory",
-  ghost: "text-charcoal hover:text-brass border-b border-transparent hover:border-brass px-0 py-1",
-  dark: "bg-ivory text-charcoal hover:bg-brass-bright",
+  primary: "bg-ink text-paper hover:bg-ink-soft",
+  secondary: "border border-ink text-ink hover:bg-ink hover:text-paper",
+  ghost: "text-ink hover:text-gray border-b border-transparent hover:border-ink px-0 py-1",
+  dark: "bg-paper text-ink hover:bg-gray-light",
 };
 
 export function Button({

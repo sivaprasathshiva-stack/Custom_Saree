@@ -35,7 +35,7 @@ export function MediaPlaceholder({
         <span className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-70">
           Media Placeholder
         </span>
-        <span className="font-display text-lg italic">{label}</span>
+        <span className="font-display text-lg">{label}</span>
         {hint && (
           <span className="font-mono text-[10px] uppercase tracking-[0.15em] opacity-60">
             {hint}

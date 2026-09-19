@@ -39,7 +39,7 @@ export default function Home() {
           <h1 className="mt-6 max-w-4xl font-display text-5xl leading-[1.05] md:text-7xl">
             Design silk.
             <br />
-            <span className="italic text-brass-bright">Weave your idea.</span>
+            <span className="text-gray-light">Weave your idea.</span>
           </h1>
           <p className="mt-6 max-w-lg text-base text-stone-light/90 md:text-lg">
             A digital studio for creating bespoke silk sarees, from material and colour to
@@ -57,7 +57,7 @@ export default function Home() {
       {/* 02 — Textile statement */}
       <section className="mx-auto max-w-[1600px] px-6 py-28 md:px-10">
         <SectionLabel index="01">The Material Is the Product</SectionLabel>
-        <p className="mt-8 max-w-3xl font-display text-3xl italic leading-snug text-charcoal md:text-5xl">
+        <p className="mt-8 max-w-3xl font-display text-3xl leading-snug text-charcoal md:text-5xl">
           Every thread can be designed — silk, zari, weave, colour and motif, engineered
           together before a single yarn is dyed.
         </p>
@@ -118,7 +118,7 @@ export default function Home() {
         <div className="mx-auto grid max-w-[1600px] grid-cols-1 items-center gap-12 px-6 py-24 md:grid-cols-2 md:px-10">
           <div>
             <SectionLabel index="04" dark>The Textile Studio</SectionLabel>
-            <h2 className="mt-6 font-display text-4xl italic leading-tight md:text-5xl">
+            <h2 className="mt-6 font-display text-4xl leading-tight md:text-5xl">
               Design it yourself, down to the last centimetre of border.
             </h2>
             <p className="mt-6 max-w-md text-stone-light/85">
@@ -149,7 +149,7 @@ export default function Home() {
             className="md:col-span-1"
           />
           <div className="flex flex-col justify-center gap-6 md:col-span-2">
-            <p className="font-display text-3xl italic leading-snug text-charcoal md:text-4xl">
+            <p className="font-display text-3xl leading-snug text-charcoal md:text-4xl">
               Behind every design is a weaver, a loom and a discipline passed
               through generations.
             </p>
@@ -170,7 +170,7 @@ export default function Home() {
           <SectionLabel index="06">The Saree Passport</SectionLabel>
           <div className="mt-12 grid grid-cols-1 gap-12 md:grid-cols-2">
             <div className="flex flex-col justify-center gap-6">
-              <h2 className="font-display text-4xl italic leading-tight text-charcoal md:text-5xl">
+              <h2 className="font-display text-4xl leading-tight text-charcoal md:text-5xl">
                 Every finished saree carries its own record.
               </h2>
               <p className="max-w-md text-stone">
@@ -213,7 +213,7 @@ export default function Home() {
       {/* 08 — Final CTA */}
       <section className="bg-charcoal text-ivory">
         <div className="mx-auto max-w-[1600px] px-6 py-32 text-center md:px-10">
-          <h2 className="font-display text-4xl italic leading-tight md:text-6xl">
+          <h2 className="font-display text-4xl leading-tight md:text-6xl">
             Make something that exists only once.
           </h2>
           <div className="mt-10 flex justify-center">

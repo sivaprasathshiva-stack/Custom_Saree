@@ -1,25 +1,47 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand palette — quiet luxury, textile-lab restraint */
-  --color-ivory: #f6f2ea;
-  --color-ivory-deep: #ede6d8;
-  --color-charcoal: #16151a;
-  --color-charcoal-soft: #232227;
-  --color-stone: #8b857a;
-  --color-stone-light: #c9c2b4;
-  --color-maroon: #5c1a2b;
-  --color-brass: #a9812f;
-  --color-brass-bright: #c79a44;
-  --color-indigo: #232a4d;
-  --color-line: #d9d2c3;
-  --color-line-dark: #35333a;
+  /* Monochrome-first palette — black/white contrast, minimal accent */
+  --color-ink: #0a0a0a;
+  --color-ink-soft: #1a1a1a;
+  --color-paper: #ffffff;
+  --color-paper-dim: #f4f4f2;
+  --color-gray: #8a8a86;
+  --color-gray-light: #c7c6c1;
+  --color-line: #e3e2dd;
+  --color-line-dark: #2b2b2b;
+  --color-accent: #6b6459;
   --color-success: #3f6b4c;
   --color-warning: #a9682f;
   --color-danger: #8c2f2f;
+
+  /* legacy aliases kept for compatibility during migration */
+  --color-ivory: var(--color-paper);
+  --color-ivory-deep: var(--color-paper-dim);
+  --color-charcoal: var(--color-ink);
+  --color-charcoal-soft: var(--color-ink-soft);
+  --color-stone: var(--color-gray);
+  --color-stone-light: var(--color-gray-light);
+  --color-maroon: var(--color-ink);
+  --color-brass: var(--color-accent);
+  --color-brass-bright: var(--color-accent);
+  --color-indigo: var(--color-ink);
 }
 
 @theme inline {
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-paper: var(--color-paper);
+  --color-paper-dim: var(--color-paper-dim);
+  --color-gray: var(--color-gray);
+  --color-gray-light: var(--color-gray-light);
+  --color-line: var(--color-line);
+  --color-line-dark: var(--color-line-dark);
+  --color-accent: var(--color-accent);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+
   --color-ivory: var(--color-ivory);
   --color-ivory-deep: var(--color-ivory-deep);
   --color-charcoal: var(--color-charcoal);
@@ -30,11 +52,6 @@
   --color-brass: var(--color-brass);
   --color-brass-bright: var(--color-brass-bright);
   --color-indigo: var(--color-indigo);
-  --color-line: var(--color-line);
-  --color-line-dark: var(--color-line-dark);
-  --color-success: var(--color-success);
-  --color-warning: var(--color-warning);
-  --color-danger: var(--color-danger);
 
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
@@ -58,8 +75,8 @@ body {
 }
 
 ::selection {
-  background: var(--color-brass-bright);
-  color: var(--color-charcoal);
+  background: var(--color-ink);
+  color: var(--color-paper);
 }
 
 @media (prefers-reduced-motion: reduce) {

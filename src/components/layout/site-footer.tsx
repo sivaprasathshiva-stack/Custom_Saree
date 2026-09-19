@@ -46,7 +46,7 @@ export function SiteFooter() {
         <div className="grid grid-cols-2 gap-10 border-b border-line-dark pb-14 md:grid-cols-6">
           <div className="col-span-2">
             <p className="font-display text-2xl text-ivory">
-              SĀRĪ <span className="italic text-brass-bright">Studio</span>
+              SĀRĪ <span className="text-gray-light">Studio</span>
             </p>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-stone-light/80">
               A digital studio for designing bespoke silk sarees, physically manufactured

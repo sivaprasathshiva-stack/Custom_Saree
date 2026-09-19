@@ -13,7 +13,7 @@ export function SectionLabel({
         dark ? "text-stone-light" : "text-stone"
       }`}
     >
-      {index && <span className="text-brass">{index}</span>}
+      {index && <span className="text-ink font-semibold">{index}</span>}
       <span>{children}</span>
       <span className={`h-px flex-1 ${dark ? "bg-line-dark" : "bg-line"}`} />
     </div>
