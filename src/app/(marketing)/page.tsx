@@ -182,7 +182,7 @@ export default function Home() {
         <div className="mx-auto max-w-[1600px] px-6 py-28 md:px-10">
           <SectionLabel>From the archive</SectionLabel>
           <p className="mt-6 max-w-2xl font-display text-3xl leading-snug text-charcoal md:text-4xl">
-            Motifs and weave structures travel across centuries. SĀRĪ Studio's
+            Motifs and weave structures travel across centuries. SĀRĪ Studio&rsquo;s
             material library draws on that history without claiming it.
           </p>
           <div className="mt-12">
@@ -190,7 +190,7 @@ export default function Home() {
           </div>
           <p className="mt-8 max-w-xl text-sm text-stone">
             Public-domain works shown for research and inspiration only, via The
-            Metropolitan Museum of Art's Open Access program. SĀRĪ Studio has no
+            Metropolitan Museum of Art&rsquo;s Open Access program. SĀRĪ Studio has no
             affiliation with and does not claim to have made these objects.
           </p>
         </div>
