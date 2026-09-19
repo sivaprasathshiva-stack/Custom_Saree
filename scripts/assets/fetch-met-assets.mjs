@@ -19,9 +19,23 @@
  * results that are off-topic (furniture, arms & armor) or unsuitable for
  * reuse regardless of license (sacred/ceremonial objects — a Buddhist
  * vestment, a devotional triptych, showed up under "silk"/"weaving"
- * queries). Always hand-review the script's output before committing it to
- * data/media/cultural-assets.json; don't trust query relevance blindly.
- * The current registry was curated down from ~25 raw results to 3.
+ * queries). EXCLUDE_KEYWORDS below is a first-pass filter for the worst
+ * offenders, but it is not a substitute for hand-reviewing this script's
+ * console output before curating data/media/cultural-assets.json.
+ *
+ * CURATION RULE: only ever remove whole entries from the JSON this script
+ * writes. Never hand-type or hand-edit title/date/medium/sourceUrl for an
+ * entry that survives curation — that metadata must come straight from the
+ * API response for the id you're keeping, or attribution silently becomes
+ * wrong (this happened once already: a hand-retyped registry ended up with
+ * object IDs pointing at different, unrelated works).
+ *
+ * Downloads the full-resolution `primaryImage`, not `primaryImageSmall` —
+ * the latter is ~500-750px, which renders visibly soft in any large or
+ * high-DPI placement. Next.js's built-in image optimizer generates the
+ * actual served responsive/AVIF/WebP variants from this source at request
+ * time, so storing the high-res original here is the correct level for
+ * this pipeline, not something to hand-resize ahead of time.
  */
 import { mkdirSync, writeFileSync, existsSync } from "node:fs";
 
@@ -43,8 +57,36 @@ const QUERIES = [
   { q: "Indian textile motif", take: 2 },
   { q: "handloom weaving", take: 2 },
   { q: "silk brocade panel", take: 3 },
-  { q: "Kashmir shawl", take: 2 },
   { q: "silk damask fabric", take: 3 },
+];
+
+// First-pass filter for results that are technically public-domain but
+// clearly off-topic or inappropriate to reuse as generic textile-story
+// decoration (furniture, arms & armor, devotional/ceremonial objects).
+// Case-insensitive substring match against the object title.
+const EXCLUDE_KEYWORDS = [
+  "crib",
+  "triptych",
+  "mandylion",
+  "vestment",
+  "kesa",
+  "thangka",
+  "deity",
+  "bodhisattva",
+  "dagger",
+  "scabbard",
+  "arm guard",
+  "dastana",
+  "bib",
+  "statuette",
+  "commode",
+  "bookcase",
+  "bed",
+  "chair",
+  "settee",
+  "reliquary",
+  "shrine",
+  "altar",
 ];
 
 function slugify(str) {
@@ -101,19 +143,27 @@ async function main() {
       // Mandatory rights gate. Anything not explicitly public domain is
       // skipped entirely — never downloaded, never registered.
       if (!obj.isPublicDomain) continue;
-      if (!obj.primaryImageSmall) continue;
+      if (!obj.primaryImage) continue;
+
+      const titleLower = (obj.title || "").toLowerCase();
+      if (EXCLUDE_KEYWORDS.some((kw) => titleLower.includes(kw))) {
+        console.log(`skip (excluded keyword) — "${obj.title}"`);
+        continue;
+      }
 
       seen.add(id);
       kept++;
 
-      const slug = slugify(`met-${obj.objectName || "object"}-${obj.title || id}`);
+      const slug = slugify(`met-${id}-${obj.title || "object"}`);
       const filename = `${slug || `met-${id}`}.jpg`;
       const localPath = new URL(filename, MEDIA_DIR);
 
       if (!existsSync(localPath)) {
         try {
-          const bytes = await downloadImage(obj.primaryImageSmall, localPath);
-          console.log(`downloaded ${filename} (${(bytes / 1024).toFixed(0)} KB) — "${obj.title}"`);
+          const bytes = await downloadImage(obj.primaryImage, localPath);
+          console.log(
+            `downloaded ${filename} (${(bytes / 1024).toFixed(0)} KB) — id ${id} — "${obj.title}"`
+          );
         } catch (e) {
           console.error(`  failed to download object ${id}:`, e.message);
           continue;

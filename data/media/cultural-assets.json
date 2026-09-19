@@ -1,53 +1,126 @@
 [
   {
-    "id": "met-silk-animal-carpet",
+    "id": "met-209329",
+    "title": "Tapestry Room from Croome Court",
+    "institution": "The Metropolitan Museum of Art",
+    "creator": "Robert Adam",
+    "date": "1763–71",
+    "medium": "Plaster, pine, mahogany, bronze-gilt, marble, lapis lazuli, steel; wool and silk (22-24 warps per inch, 9-10 per centimeter)",
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/209329",
+    "imageUrl": "https://images.metmuseum.org/CRDImages/es/original/DP341255.jpg",
+    "localPath": "/media/archive/met-209329-tapestry-room-from-croome-court.jpg",
+    "rightsStatus": "PUBLIC_DOMAIN",
+    "licenseUrl": "https://www.metmuseum.org/policies/open-access",
+    "attributionRequired": false,
+    "attributionText": "The Metropolitan Museum of Art, Open Access",
+    "category": "archive",
+    "tags": [
+      "silk textile India"
+    ],
+    "intendedUse": "editorial — historical textile reference, not company product",
+    "query": "silk textile India"
+  },
+  {
+    "id": "met-454609",
+    "title": "Textile Fragment",
+    "institution": "The Metropolitan Museum of Art",
+    "date": "first half 16th century",
+    "medium": "Silk, metal wrapped thread; taqueté (seraser)",
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/454609",
+    "imageUrl": "https://images.metmuseum.org/CRDImages/is/original/DP230005.jpg",
+    "localPath": "/media/archive/met-454609-textile-fragment.jpg",
+    "rightsStatus": "PUBLIC_DOMAIN",
+    "licenseUrl": "https://www.metmuseum.org/policies/open-access",
+    "attributionRequired": false,
+    "attributionText": "The Metropolitan Museum of Art, Open Access",
+    "category": "archive",
+    "tags": [
+      "brocade silk"
+    ],
+    "intendedUse": "editorial — historical textile reference, not company product",
+    "query": "brocade silk"
+  },
+  {
+    "id": "met-446642",
     "title": "Silk Animal Carpet",
     "institution": "The Metropolitan Museum of Art",
     "date": "second half 16th century",
-    "medium": "Silk (warp, weft and pile), metal wrapped thread; cut and voided solid velvet",
+    "medium": "Silk (warp, weft, and pile); asymmetrically knotted pile",
     "sourceUrl": "https://www.metmuseum.org/art/collection/search/446642",
-    "imageUrl": "https://images.metmuseum.org/CRDImages/is/original/DP170032.jpg",
-    "localPath": "/media/archive/met-carpet-silk-animal-carpet.jpg",
+    "imageUrl": "https://images.metmuseum.org/CRDImages/is/original/DP229989.jpg",
+    "localPath": "/media/archive/met-446642-silk-animal-carpet.jpg",
     "rightsStatus": "PUBLIC_DOMAIN",
     "licenseUrl": "https://www.metmuseum.org/policies/open-access",
     "attributionRequired": false,
     "attributionText": "The Metropolitan Museum of Art, Open Access",
     "category": "archive",
-    "tags": ["silk", "weaving", "historical motif"],
-    "intendedUse": "editorial — historical textile reference, not company product"
+    "tags": [
+      "woven silk pattern"
+    ],
+    "intendedUse": "editorial — historical textile reference, not company product",
+    "query": "woven silk pattern"
   },
   {
-    "id": "met-tapestry-room-croome-court",
-    "title": "Tapestry Room from Croome Court",
+    "id": "met-231667",
+    "title": "Two panels from the 'Verdures du Vatican' series",
     "institution": "The Metropolitan Museum of Art",
-    "date": "ca. 1763–71",
-    "medium": "Silk and wool tapestry, woven interior",
-    "sourceUrl": "https://www.metmuseum.org/art/collection/search/320054",
-    "imageUrl": "https://images.metmuseum.org/CRDImages/es/original/DT234448.jpg",
-    "localPath": "/media/archive/met-period-room-tapestry-room-from-croome-court.jpg",
+    "creator": "Jean Démosthène Dugourc",
+    "date": "ca. 1799",
+    "medium": "Woven silk and metal thread with applied silk and chenille embroidery",
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/231667",
+    "imageUrl": "https://images.metmuseum.org/CRDImages/es/original/DP152166.jpg",
+    "localPath": "/media/archive/met-231667-two-panels-from-the-verdures-du-vatican-series.jpg",
     "rightsStatus": "PUBLIC_DOMAIN",
     "licenseUrl": "https://www.metmuseum.org/policies/open-access",
     "attributionRequired": false,
     "attributionText": "The Metropolitan Museum of Art, Open Access",
     "category": "archive",
-    "tags": ["silk", "tapestry", "interior textile"],
-    "intendedUse": "editorial — historical textile reference, not company product"
+    "tags": [
+      "woven silk pattern"
+    ],
+    "intendedUse": "editorial — historical textile reference, not company product",
+    "query": "woven silk pattern"
   },
   {
-    "id": "met-textile-fragment",
-    "title": "Textile Fragment",
+    "id": "met-53610",
+    "title": "Robe (Kosode) with Cherry Blossoms and Cypress Fence",
     "institution": "The Metropolitan Museum of Art",
-    "date": "historical",
-    "medium": "Woven textile fragment",
-    "sourceUrl": "https://www.metmuseum.org/art/collection/search/36225",
-    "imageUrl": "https://images.metmuseum.org/CRDImages/is/original/DP-13503-001.jpg",
-    "localPath": "/media/archive/met-textile-fragment-textile-fragment.jpg",
+    "creator": "Japan",
+    "date": "second half of the 17th century",
+    "medium": "Silk and metallic thread embroidery with resist dyeing on satin damask",
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/53610",
+    "imageUrl": "https://images.metmuseum.org/CRDImages/as/original/CT_6851.jpg",
+    "localPath": "/media/archive/met-53610-robe-kosode-with-cherry-blossoms-and-cypress-fence.jpg",
     "rightsStatus": "PUBLIC_DOMAIN",
     "licenseUrl": "https://www.metmuseum.org/policies/open-access",
     "attributionRequired": false,
     "attributionText": "The Metropolitan Museum of Art, Open Access",
     "category": "archive",
-    "tags": ["textile", "weave structure", "historical motif"],
-    "intendedUse": "editorial — historical textile reference, not company product"
+    "tags": [
+      "silk damask fabric"
+    ],
+    "intendedUse": "editorial — historical textile reference, not company product",
+    "query": "silk damask fabric"
+  },
+  {
+    "id": "met-463978",
+    "title": "Damask",
+    "institution": "The Metropolitan Museum of Art",
+    "creator": "Italian",
+    "date": "14th century",
+    "medium": "Silk",
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/463978",
+    "imageUrl": "https://images.metmuseum.org/CRDImages/md/original/sf17-121-6s1.jpg",
+    "localPath": "/media/archive/met-463978-damask.jpg",
+    "rightsStatus": "PUBLIC_DOMAIN",
+    "licenseUrl": "https://www.metmuseum.org/policies/open-access",
+    "attributionRequired": false,
+    "attributionText": "The Metropolitan Museum of Art, Open Access",
+    "category": "archive",
+    "tags": [
+      "silk damask fabric"
+    ],
+    "intendedUse": "editorial — historical textile reference, not company product",
+    "query": "silk damask fabric"
   }
 ]
