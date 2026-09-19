@@ -33,9 +33,7 @@ export default function Home() {
           className="!border-0"
         />
         <div className="relative z-10 mx-auto w-full max-w-[1600px] px-6 pb-20 md:px-10">
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-brass-bright">
-            Custom Silk Manufacturing
-          </p>
+          <p className="text-sm text-gray-light">Custom silk manufacturing</p>
           <h1 className="mt-6 max-w-4xl font-display text-5xl leading-[1.05] md:text-7xl">
             Design silk.
             <br />
@@ -46,9 +44,9 @@ export default function Home() {
             motif, border and pallu — physically manufactured to your specification.
           </p>
           <div className="mt-9 flex flex-wrap gap-4">
-            <Button href="/studio" variant="dark">Start Designing</Button>
+            <Button href="/studio" variant="dark">Start designing</Button>
             <Button href="/craft" variant="secondary" className="border-ivory text-ivory hover:bg-ivory hover:text-charcoal">
-              Explore the Craft
+              Explore the craft
             </Button>
           </div>
         </div>
@@ -56,7 +54,7 @@ export default function Home() {
 
       {/* 02 — Textile statement */}
       <section className="mx-auto max-w-[1600px] px-6 py-28 md:px-10">
-        <SectionLabel index="01">The Material Is the Product</SectionLabel>
+        <SectionLabel>The Material Is the Product</SectionLabel>
         <p className="mt-8 max-w-3xl font-display text-3xl leading-snug text-charcoal md:text-5xl">
           Every thread can be designed — silk, zari, weave, colour and motif, engineered
           together before a single yarn is dyed.
@@ -66,7 +64,7 @@ export default function Home() {
       {/* 03 — Material intelligence */}
       <section className="border-y border-line bg-ivory-deep">
         <div className="mx-auto max-w-[1600px] px-6 py-24 md:px-10">
-          <SectionLabel index="02">Material Intelligence</SectionLabel>
+          <SectionLabel>Material Intelligence</SectionLabel>
           <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-4">
             {silks.map((s) => (
               <Link
@@ -78,12 +76,10 @@ export default function Home() {
                 <div className="flex flex-1 flex-col justify-between p-5">
                   <div>
                     <p className="font-display text-xl">{s.name}</p>
-                    <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.15em] text-stone">
-                      {s.note}
-                    </p>
+                    <p className="mt-1 text-sm text-stone">{s.note}</p>
                   </div>
-                  <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.15em] text-charcoal group-hover:text-brass">
-                    {s.code} · View Specification →
+                  <p className="mt-6 text-sm text-charcoal underline decoration-line underline-offset-4 group-hover:decoration-charcoal">
+                    View specification
                   </p>
                 </div>
               </Link>
@@ -94,20 +90,15 @@ export default function Home() {
 
       {/* 04 — From pixel to loom */}
       <section className="mx-auto max-w-[1600px] px-6 py-28 md:px-10">
-        <SectionLabel index="03">From Pixel to Loom</SectionLabel>
+        <SectionLabel>From Pixel to Loom</SectionLabel>
         <div className="mt-12 flex flex-col gap-0 md:flex-row md:items-stretch">
-          {process.map((p, i) => (
+          {process.map((p) => (
             <div
               key={p.n}
               className="group relative flex flex-1 flex-col gap-3 border-t border-line py-6 md:border-t-0 md:border-l md:px-6 md:py-0"
             >
-              <span className="font-mono text-[11px] text-brass">{p.n}</span>
+              <span className="text-sm text-stone">{p.n}</span>
               <span className="font-display text-lg">{p.label}</span>
-              {i < process.length - 1 && (
-                <span className="absolute right-0 top-1/2 hidden -translate-y-1/2 translate-x-1/2 text-stone md:block">
-                  →
-                </span>
-              )}
             </div>
           ))}
         </div>
@@ -117,7 +108,7 @@ export default function Home() {
       <section className="border-y border-line-dark bg-charcoal text-ivory">
         <div className="mx-auto grid max-w-[1600px] grid-cols-1 items-center gap-12 px-6 py-24 md:grid-cols-2 md:px-10">
           <div>
-            <SectionLabel index="04" dark>The Textile Studio</SectionLabel>
+            <SectionLabel dark>The Textile Studio</SectionLabel>
             <h2 className="mt-6 font-display text-4xl leading-tight md:text-5xl">
               Design it yourself, down to the last centimetre of border.
             </h2>
@@ -141,7 +132,7 @@ export default function Home() {
 
       {/* 06 — Craftsmanship */}
       <section className="mx-auto max-w-[1600px] px-6 py-28 md:px-10">
-        <SectionLabel index="05">Craftsmanship</SectionLabel>
+        <SectionLabel>Craftsmanship</SectionLabel>
         <div className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-3">
           <MediaPlaceholder
             label="Master Weaver Portrait"
@@ -158,7 +149,7 @@ export default function Home() {
               verified by the manufacturing team — never fabricated for marketing.
             </p>
             <Button href="/craft" variant="ghost" className="w-fit">
-              Meet the Weavers →
+              Meet the weavers
             </Button>
           </div>
         </div>
@@ -167,7 +158,7 @@ export default function Home() {
       {/* 07 — Digital passport */}
       <section className="border-t border-line bg-ivory-deep">
         <div className="mx-auto max-w-[1600px] px-6 py-28 md:px-10">
-          <SectionLabel index="06">The Saree Passport</SectionLabel>
+          <SectionLabel>The Saree Passport</SectionLabel>
           <div className="mt-12 grid grid-cols-1 gap-12 md:grid-cols-2">
             <div className="flex flex-col justify-center gap-6">
               <h2 className="font-display text-4xl leading-tight text-charcoal md:text-5xl">
@@ -182,7 +173,7 @@ export default function Home() {
               </Button>
             </div>
             <div className="border border-line bg-ivory p-8 font-mono text-sm">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-stone">Saree Passport</p>
+              <p className="text-stone">Saree passport</p>
               <div className="mt-6 flex items-center justify-between border-b border-line pb-4">
                 <span className="text-stone">Passport ID</span>
                 <span>SS-2026-00124</span>
@@ -193,17 +184,15 @@ export default function Home() {
               </div>
               <div className="mt-4 flex items-center justify-between border-b border-line pb-4">
                 <span className="text-stone">Zari</span>
-                <span>Premium — Demo Configuration</span>
+                <span>Premium (demo configuration)</span>
               </div>
               <div className="mt-4 flex items-center justify-between border-b border-line pb-4">
-                <span className="text-stone">QC Status</span>
-                <span className="text-success">VERIFIED</span>
+                <span className="text-stone">QC status</span>
+                <span className="text-success">Verified</span>
               </div>
               <div className="mt-4 flex items-center justify-between">
-                <span className="text-stone">Authenticity</span>
-                <span className="text-stone-light bg-charcoal px-2 py-0.5 text-[10px] uppercase tracking-widest">
-                  Demo Data
-                </span>
+                <span className="text-stone">Data</span>
+                <span className="text-stone">Demo passport, not a real order</span>
               </div>
             </div>
           </div>
@@ -217,7 +206,7 @@ export default function Home() {
             Make something that exists only once.
           </h2>
           <div className="mt-10 flex justify-center">
-            <Button href="/studio" variant="dark">Create Your Saree</Button>
+            <Button href="/studio" variant="dark">Create your saree</Button>
           </div>
         </div>
       </section>

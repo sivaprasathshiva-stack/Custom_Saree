@@ -1,22 +1,24 @@
+/**
+ * A section's small caption label. Deliberately plain — no forced caps,
+ * no mono font, no hairline rule — those combined are exactly the
+ * "generated page" tell the frontend-design skill calls out. Only pass
+ * `step` when the content is a genuine numbered sequence (e.g. a process
+ * with real order), not as decoration on an arbitrary section.
+ */
 export function SectionLabel({
-  index,
+  step,
   children,
   dark = false,
 }: {
-  index?: string;
+  step?: string;
   children: React.ReactNode;
   dark?: boolean;
 }) {
   return (
-    <div
-      className={`flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.25em] ${
-        dark ? "text-stone-light" : "text-stone"
-      }`}
-    >
-      {index && <span className="text-ink font-semibold">{index}</span>}
-      <span>{children}</span>
-      <span className={`h-px flex-1 ${dark ? "bg-line-dark" : "bg-line"}`} />
-    </div>
+    <p className={`text-sm ${dark ? "text-stone-light" : "text-stone"}`}>
+      {step && <span className="mr-2 text-ink">{step}</span>}
+      {children}
+    </p>
   );
 }
 

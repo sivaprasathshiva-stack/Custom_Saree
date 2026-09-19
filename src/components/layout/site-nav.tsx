@@ -29,7 +29,7 @@ export function SiteNav() {
             <Link
               key={l.href}
               href={l.href}
-              className="font-mono text-[11px] uppercase tracking-[0.18em] text-charcoal/80 transition-colors hover:text-brass"
+              className="text-sm text-charcoal/80 transition-colors hover:text-charcoal"
             >
               {l.label}
             </Link>
@@ -37,7 +37,7 @@ export function SiteNav() {
         </nav>
 
         <div className="hidden items-center gap-5 lg:flex">
-          <button aria-label="Search" className="text-charcoal/70 hover:text-brass">
+          <button aria-label="Search" className="text-charcoal/70 hover:text-charcoal">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.4" />
               <path d="M17 17L13 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -45,12 +45,12 @@ export function SiteNav() {
           </button>
           <Link
             href="/account"
-            className="font-mono text-[11px] uppercase tracking-[0.18em] text-charcoal/80 hover:text-brass"
+            className="text-sm text-charcoal/80 hover:text-charcoal"
           >
             Account
           </Link>
           <Button href="/studio" variant="primary">
-            Create Your Saree
+            Create your saree
           </Button>
         </div>
 
@@ -72,13 +72,13 @@ export function SiteNav() {
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className="font-mono text-sm uppercase tracking-[0.18em] text-charcoal"
+                className="text-base text-charcoal"
               >
                 {l.label}
               </Link>
             ))}
             <Button href="/studio" variant="primary" className="mt-2 w-full">
-              Create Your Saree
+              Create your saree
             </Button>
           </nav>
         </div>

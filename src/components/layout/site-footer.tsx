@@ -55,15 +55,13 @@ export function SiteFooter() {
           </div>
           {columns.map((col) => (
             <div key={col.title}>
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-stone">
-                {col.title}
-              </p>
+              <p className="text-sm text-stone">{col.title}</p>
               <ul className="mt-4 flex flex-col gap-3">
                 {col.links.map((l) => (
                   <li key={l.href}>
                     <Link
                       href={l.href}
-                      className="text-sm text-stone-light/85 transition-colors hover:text-brass-bright"
+                      className="text-sm text-stone-light/85 transition-colors hover:text-ivory"
                     >
                       {l.label}
                     </Link>
@@ -74,12 +72,12 @@ export function SiteFooter() {
           ))}
         </div>
 
-        <div className="flex flex-col items-start justify-between gap-4 pt-8 font-mono text-[10px] uppercase tracking-[0.15em] text-stone md:flex-row md:items-center">
-          <span>© {new Date().getFullYear()} Sārī Studio — Content shown is placeholder demo data.</span>
+        <div className="flex flex-col items-start justify-between gap-4 pt-8 text-sm text-stone md:flex-row md:items-center">
+          <span>© {new Date().getFullYear()} Sārī Studio. Content shown is placeholder demo data.</span>
           <div className="flex gap-6">
-            <Link href="/terms" className="hover:text-brass-bright">Terms</Link>
-            <Link href="/privacy" className="hover:text-brass-bright">Privacy</Link>
-            <Link href="/shipping" className="hover:text-brass-bright">Shipping</Link>
+            <Link href="/terms" className="hover:text-ivory">Terms</Link>
+            <Link href="/privacy" className="hover:text-ivory">Privacy</Link>
+            <Link href="/shipping" className="hover:text-ivory">Shipping</Link>
           </div>
         </div>
       </div>

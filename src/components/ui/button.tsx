@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 type Variant = "primary" | "secondary" | "ghost" | "dark";
 
 const base =
-  "inline-flex items-center justify-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] transition-colors duration-200 px-6 py-3.5 whitespace-nowrap";
+  "inline-flex items-center justify-center gap-2 text-sm font-medium transition-colors duration-200 px-6 py-3.5 whitespace-nowrap";
 
 const variants: Record<Variant, string> = {
   primary: "bg-ink text-paper hover:bg-ink-soft",

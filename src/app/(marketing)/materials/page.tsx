@@ -10,7 +10,7 @@ export default function MaterialsPage() {
     <div className="bg-ivory">
       <section className="border-b border-line px-6 py-20 md:px-10">
         <div className="mx-auto max-w-[1600px]">
-          <SectionLabel index="MATERIAL">Silk Library</SectionLabel>
+          <SectionLabel>Silk Library</SectionLabel>
           <h1 className="mt-6 max-w-2xl font-display text-5xl leading-tight md:text-6xl">
             Every silk we weave is a specification, not just a swatch.
           </h1>
@@ -45,7 +45,7 @@ export default function MaterialsPage() {
                   </dl>
                 </div>
                 <div className="mt-8">
-                  <Button href="/studio" variant="secondary">Use This Material</Button>
+                  <Button href="/studio" variant="secondary">Use this material</Button>
                 </div>
               </div>
             </div>
