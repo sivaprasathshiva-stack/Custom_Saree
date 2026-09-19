@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand palette — quiet luxury, textile-lab restraint */
+  --color-ivory: #f6f2ea;
+  --color-ivory-deep: #ede6d8;
+  --color-charcoal: #16151a;
+  --color-charcoal-soft: #232227;
+  --color-stone: #8b857a;
+  --color-stone-light: #c9c2b4;
+  --color-maroon: #5c1a2b;
+  --color-brass: #a9812f;
+  --color-brass-bright: #c79a44;
+  --color-indigo: #232a4d;
+  --color-line: #d9d2c3;
+  --color-line-dark: #35333a;
+  --color-success: #3f6b4c;
+  --color-warning: #a9682f;
+  --color-danger: #8c2f2f;
+}
+
+@theme inline {
+  --color-ivory: var(--color-ivory);
+  --color-ivory-deep: var(--color-ivory-deep);
+  --color-charcoal: var(--color-charcoal);
+  --color-charcoal-soft: var(--color-charcoal-soft);
+  --color-stone: var(--color-stone);
+  --color-stone-light: var(--color-stone-light);
+  --color-maroon: var(--color-maroon);
+  --color-brass: var(--color-brass);
+  --color-brass-bright: var(--color-brass-bright);
+  --color-indigo: var(--color-indigo);
+  --color-line: var(--color-line);
+  --color-line-dark: var(--color-line-dark);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: var(--color-brass-bright);
+  color: var(--color-charcoal);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* thin technical scrollbars for studio panels */
+.thin-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-line-dark);
+  border-radius: 3px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
