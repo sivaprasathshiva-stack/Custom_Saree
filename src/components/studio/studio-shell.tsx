@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { StatusBadge } from "@/components/ui/section-label";
 import {
   StudioStep,
@@ -21,8 +22,17 @@ import {
   loadVersions,
   saveVersions,
 } from "./local-design-store";
+import {
+  getUser,
+  loadCurrentDesignCloud,
+  saveCurrentDesignCloud,
+  loadVersionsCloud,
+  saveVersionCloud,
+  getOrCreateDesignId,
+} from "./cloud-design-store";
 import type { ArtworkLayer, DesignVersion, SareeDesign, ManufacturabilityCheck, PriceResult } from "./types";
 import type { DesignAction } from "./design-reducer";
+import type { User } from "@supabase/supabase-js";
 
 const inr = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -40,6 +50,8 @@ export function StudioShell() {
   const [savedSecondsAgo, setSavedSecondsAgo] = useState<number | null>(null);
   const [versions, setVersions] = useState<DesignVersion[]>(() => loadVersions());
   const [dragActive, setDragActive] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const cloudDesignId = useRef<string | null>(null);
 
   const {
     design,
@@ -59,25 +71,53 @@ export function StudioShell() {
   // session always wins over a ?preset=/?material= link — both are a
   // starting point, never something that should clobber in-progress work.
   useEffect(() => {
-    const saved = loadCurrentDesign();
-    if (saved) {
-      reset(saved);
-      return;
+    let cancelled = false;
+
+    async function init() {
+      const currentUser = await getUser();
+      if (cancelled) return;
+      setUser(currentUser);
+
+      // Signed-in users: the cloud copy is the source of truth (falls back
+      // to any local draft only if nothing has been saved to the cloud yet,
+      // e.g. right after signing up on a browser that already had a guest
+      // draft in localStorage).
+      if (currentUser) {
+        const cloudDesign = await loadCurrentDesignCloud(currentUser.id);
+        if (cancelled) return;
+        if (cloudDesign) {
+          reset(cloudDesign);
+          const cloudVersions = await loadVersionsCloud(currentUser.id);
+          if (!cancelled) setVersions(cloudVersions);
+          return;
+        }
+      }
+
+      const saved = loadCurrentDesign();
+      if (saved) {
+        reset(saved);
+        return;
+      }
+      const params = new URLSearchParams(window.location.search);
+      const presetId = params.get("preset");
+      if (presetId) {
+        reset(createDefaultDesign(presetId));
+        return;
+      }
+      // Material-card handoff from the homepage/materials pages, e.g.
+      // /studio?material=kan — pre-selects that silk on a fresh design
+      // without inventing a separate material-selection state.
+      const materialId = params.get("material");
+      if (materialId && materials.some((m) => m.id === materialId)) {
+        const base = createDefaultDesign();
+        reset({ ...base, materialId });
+      }
     }
-    const params = new URLSearchParams(window.location.search);
-    const presetId = params.get("preset");
-    if (presetId) {
-      reset(createDefaultDesign(presetId));
-      return;
-    }
-    // Material-card handoff from the homepage/materials pages, e.g.
-    // /studio?material=kan — pre-selects that silk on a fresh design
-    // without inventing a separate material-selection state.
-    const materialId = params.get("material");
-    if (materialId && materials.some((m) => m.id === materialId)) {
-      const base = createDefaultDesign();
-      reset({ ...base, materialId });
-    }
+
+    init();
+    return () => {
+      cancelled = true;
+    };
   }, [reset]);
 
   // "Saved Ns ago" ticker.
@@ -95,7 +135,10 @@ export function StudioShell() {
       setLastSavedAt(Date.now());
       setSavedSecondsAgo(0);
     }
-  }, [design]);
+    if (user) {
+      saveCurrentDesignCloud(user.id, design);
+    }
+  }, [design, user]);
 
   // Keyboard shortcuts.
   useEffect(() => {
@@ -128,7 +171,14 @@ export function StudioShell() {
     setVersions(next);
     saveVersions(next);
     handleSave();
-  }, [design, versions, handleSave]);
+    if (user) {
+      (async () => {
+        const designId = cloudDesignId.current ?? (await getOrCreateDesignId(user.id, design));
+        cloudDesignId.current = designId;
+        if (designId) saveVersionCloud(user.id, designId, version);
+      })();
+    }
+  }, [design, versions, handleSave, user]);
 
   const handleRestoreVersion = useCallback(
     (version: DesignVersion) => {
@@ -291,12 +341,22 @@ export function StudioShell() {
               {savedSecondsAgo === null
                 ? "Not saved yet"
                 : savedSecondsAgo === 0
-                ? "Saved just now"
+                ? user
+                  ? "Saved to your account"
+                  : "Saved on this device"
                 : `Saved ${savedSecondsAgo}s ago`}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.15em] md:gap-3">
+          {!user && (
+            <Link
+              href="/auth/login?next=/studio"
+              className="hidden border border-line-dark px-2.5 py-2 text-stone-light hover:border-brass hover:text-brass md:inline-flex md:px-3"
+            >
+              Sign in to save
+            </Link>
+          )}
           <button
             onClick={undo}
             disabled={!canUndo}
