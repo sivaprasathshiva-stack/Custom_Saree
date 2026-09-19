@@ -54,10 +54,17 @@ export function StudioShell() {
 
   // Load any previously saved design on mount (client-only — localStorage
   // isn't available during server render, so this can't be a lazy useState
-  // initializer the way `versions` is; it has to run post-mount).
+  // initializer the way `versions` is; it has to run post-mount). A saved
+  // session always wins over a ?preset= link — presets are a starting
+  // point, never something that should clobber someone's in-progress work.
   useEffect(() => {
     const saved = loadCurrentDesign();
-    if (saved) reset(saved);
+    if (saved) {
+      reset(saved);
+      return;
+    }
+    const presetId = new URLSearchParams(window.location.search).get("preset");
+    if (presetId) reset(createDefaultDesign(presetId));
   }, [reset]);
 
   // "Saved Ns ago" ticker.

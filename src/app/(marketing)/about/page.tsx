@@ -6,8 +6,8 @@ export default function Page() {
   return (
     <PageIntro
       eyebrow="About"
-      title="A digital studio for a working silk manufacturer."
-      description="Company history, legal entity, manufacturing location and team information are configurable business data — shown here once supplied, rather than invented for launch."
+      title="Made in Elampillai, Salem."
+      description="SĀRĪ Studio's sarees are manufactured in Elampillai, a silk-weaving town near Salem, Tamil Nadu. Company history, legal entity structure and team information are configurable business data — shown here once supplied, rather than invented for launch."
       heroLabel="About — Studio/Team"
       heroHint="Team or studio photography"
     />

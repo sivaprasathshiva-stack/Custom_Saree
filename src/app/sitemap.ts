@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = [
   "",
   "/about",
   "/b2b",
+  "/bridal",
   "/collections",
   "/consultation",
   "/contact",

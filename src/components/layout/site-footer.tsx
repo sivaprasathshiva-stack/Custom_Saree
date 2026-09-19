@@ -5,6 +5,7 @@ const columns = [
     title: "Create",
     links: [
       { label: "Textile Studio", href: "/studio" },
+      { label: "Bridal", href: "/bridal" },
       { label: "Textile Room", href: "/textile-room" },
       { label: "Collections", href: "/collections" },
       { label: "Sample Program", href: "/sample-program" },

@@ -1,10 +1,11 @@
-import { materials, palette, borders, pallus, zariOptions } from "./studio-data";
+import { materials, palette, borders, pallus, zariOptions, studioPresets } from "./studio-data";
 import type { ArtworkLayer, ArtworkTransform, SareeDesign } from "./types";
 
-export function createDefaultDesign(): SareeDesign {
+export function createDefaultDesign(presetId?: string): SareeDesign {
+  const preset = presetId ? studioPresets[presetId] : undefined;
   return {
-    name: "Untitled design",
-    materialId: materials[0].id,
+    name: preset ? preset.name : "Untitled design",
+    materialId: preset?.materialId ?? materials[0].id,
     paletteHexBySlot: {
       base: palette[0].hex,
       border: palette[1].hex,
@@ -13,9 +14,9 @@ export function createDefaultDesign(): SareeDesign {
     },
     artwork: { status: "empty", layers: [] },
     repeat: { type: "straight", widthCm: 18, heightCm: 18 },
-    borderId: borders[0].id,
-    palluId: pallus[0].id,
-    zariId: zariOptions[0].id,
+    borderId: preset?.borderId ?? borders[0].id,
+    palluId: preset?.palluId ?? pallus[0].id,
+    zariId: preset?.zariId ?? zariOptions[0].id,
   };
 }
 

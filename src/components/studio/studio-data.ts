@@ -63,6 +63,25 @@ export const manufacturabilityChecks: {
   { label: "Colour count", status: "pass" },
 ];
 
+/**
+ * Named starting configurations the marketing site can link into via
+ * /studio?preset=<id>. Each preset only sets material/border/pallu/zari —
+ * the same fields createDefaultDesign() sets — so it's a variant of the
+ * default, not a parallel data model.
+ */
+export const studioPresets: Record<
+  string,
+  { name: string; materialId: string; borderId: string; palluId: string; zariId: string }
+> = {
+  bridal: {
+    name: "Bridal Kanchipuram — Temple & Premium Zari",
+    materialId: "kan",
+    borderId: "temple",
+    palluId: "temple-pallu",
+    zariId: "premium",
+  },
+};
+
 export const priceBreakdown = [
   { label: "Base Silk", amount: 12400 },
   { label: "Weave Complexity", amount: 3200 },
