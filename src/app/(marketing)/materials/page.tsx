@@ -1,6 +1,7 @@
 import { SectionLabel } from "@/components/ui/section-label";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/ui/back-button";
 import { materials } from "@/components/studio/studio-data";
 
 export const metadata = { title: "Silk Library — VELVOREA" };
@@ -10,6 +11,7 @@ export default function MaterialsPage() {
     <div className="bg-ivory">
       <section className="border-b border-line px-6 py-20 md:px-10">
         <div className="mx-auto max-w-[1600px]">
+          <BackButton className="mb-8" />
           <SectionLabel>Silk Library</SectionLabel>
           <h1 className="mt-6 max-w-2xl font-display text-5xl leading-tight md:text-6xl">
             Every silk we weave is a specification, not just a swatch.

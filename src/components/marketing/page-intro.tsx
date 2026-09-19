@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { SectionLabel } from "@/components/ui/section-label";
 import { Button } from "@/components/ui/button";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
+import { BackButton } from "@/components/ui/back-button";
 
 /**
  * Shared intro block for content pages that don't yet have a fully
@@ -30,6 +31,7 @@ export function PageIntro({
     <div className="bg-ivory">
       <section className="border-b border-line px-6 py-20 md:px-10">
         <div className="mx-auto max-w-[1600px]">
+          <BackButton className="mb-8" />
           <SectionLabel>{eyebrow}</SectionLabel>
           <h1 className="mt-6 max-w-2xl font-display text-5xl leading-tight md:text-6xl">
             {title}

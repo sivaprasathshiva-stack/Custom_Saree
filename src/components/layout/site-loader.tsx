@@ -1,24 +1,28 @@
 "use client";
 
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-const SESSION_KEY = "velvorea:loaded";
-
 /**
- * First-landing loader. Shown once per browser session (sessionStorage-
- * gated), not on every client-side route change — Next's App Router
- * doesn't remount the root layout on internal navigation, so this only
- * re-appears on a real fresh load (new tab, hard refresh).
+ * First-landing loader, shown once per browser session per "zone" (main
+ * site vs. Studio — Studio gets a longer, separate first-run loader since
+ * it's a heavier, more app-like surface). Not shown again on client-side
+ * navigation within a zone the session has already seen.
  *
  * The percentage is not a fake timer dressed up as progress: it ramps
  * toward 90% while waiting, then only reaches 100% once the browser's
  * real `load` event fires — i.e. once every resource on the page
- * (images included) has actually finished loading. If the page is
- * already fully loaded by the time this mounts (fast connections),
- * it still holds briefly so the loader isn't a single-frame flash.
+ * (images included) has actually finished loading. A minimum hold time
+ * keeps it from flashing by on fast connections.
  */
 export function SiteLoader() {
+  const pathname = usePathname();
+  const isStudio = pathname?.startsWith("/studio") ?? false;
+
+  const sessionKey = isStudio ? "velvorea:studio-loaded" : "velvorea:loaded";
+  const minVisibleMs = isStudio ? 10000 : 2500;
+
   const [visible, setVisible] = useState(false);
   const [progress, setProgress] = useState(0);
   const reducedMotion = useRef(false);
@@ -26,13 +30,16 @@ export function SiteLoader() {
   useEffect(() => {
     let alreadySeen = false;
     try {
-      alreadySeen = window.sessionStorage.getItem(SESSION_KEY) === "1";
+      alreadySeen = window.sessionStorage.getItem(sessionKey) === "1";
     } catch {
       // sessionStorage unavailable (private mode etc.) — treat as not seen.
     }
     if (alreadySeen) return;
 
     reducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const effectiveMinMs = reducedMotion.current ? Math.min(minVisibleMs, 600) : minVisibleMs;
+    const mountedAt = Date.now();
+
     // Intentional: visible must start false on both server and first client
     // render (sessionStorage/matchMedia aren't available during SSR, and
     // computing this during render would risk a hydration mismatch), so the
@@ -48,33 +55,31 @@ export function SiteLoader() {
       if (done) return;
       done = true;
       setProgress(100);
-      const holdMs = reducedMotion.current ? 150 : 400;
+      const elapsed = Date.now() - mountedAt;
+      const holdMs = Math.max(0, effectiveMinMs - elapsed);
       window.setTimeout(() => {
         setVisible(false);
         document.documentElement.style.overflow = "";
         try {
-          window.sessionStorage.setItem(SESSION_KEY, "1");
+          window.sessionStorage.setItem(sessionKey, "1");
         } catch {
           // ignore
         }
       }, holdMs);
     }
 
-    if (reducedMotion.current) {
-      // Skip the animated ramp entirely; just wait for real completion.
-      setProgress(60);
-    } else {
-      const tick = () => {
-        setProgress((p) => (p >= 90 ? p : p + (90 - p) * 0.06 + 0.4));
-        raf = window.requestAnimationFrame(tick);
-      };
+    const tick = () => {
+      const elapsed = Date.now() - mountedAt;
+      // Ramp so the bar reaches ~90% right around the minimum hold time,
+      // then creeps the rest of the way while waiting on real `load`.
+      const rampTarget = Math.min(90, (elapsed / effectiveMinMs) * 90);
+      setProgress((p) => (p >= rampTarget ? p : rampTarget));
       raf = window.requestAnimationFrame(tick);
-    }
+    };
+    raf = window.requestAnimationFrame(tick);
 
     if (document.readyState === "complete") {
-      // Resources already loaded by the time we mounted — still show
-      // briefly rather than finishing on the same frame.
-      window.setTimeout(finish, 500);
+      finish();
     } else {
       window.addEventListener("load", finish, { once: true });
     }
@@ -83,7 +88,7 @@ export function SiteLoader() {
       if (raf) window.cancelAnimationFrame(raf);
       window.removeEventListener("load", finish);
     };
-  }, []);
+  }, [sessionKey, minVisibleMs]);
 
   if (!visible) return null;
 

@@ -307,7 +307,7 @@ export default function Home() {
               </div>
               <div className="mt-4 flex items-center justify-between border-b border-line pb-4">
                 <span className="text-stone">Zari</span>
-                <span>Premium (demo configuration)</span>
+                <span>Premium (sample configuration)</span>
               </div>
               <div className="mt-4 flex items-center justify-between border-b border-line pb-4">
                 <span className="text-stone">QC status</span>

@@ -1,6 +1,7 @@
 import { SectionLabel } from "@/components/ui/section-label";
 import { Button } from "@/components/ui/button";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
+import { BackButton } from "@/components/ui/back-button";
 import { studioPresets } from "@/components/studio/studio-data";
 
 export const metadata = {
@@ -16,6 +17,7 @@ export default function BridalPage() {
     <div className="bg-ivory">
       <section className="border-b border-line px-6 py-20 md:px-10">
         <div className="mx-auto max-w-[1600px]">
+          <BackButton className="mb-8" />
           <SectionLabel>Bridal</SectionLabel>
           <h1 className="mt-6 max-w-2xl font-display text-5xl leading-tight md:text-6xl">
             A saree built for one day, made to be worn for many more.
@@ -70,7 +72,7 @@ export default function BridalPage() {
           </div>
           <p className="mt-10 max-w-xl text-sm text-stone">
             This is a starting point, not a fixed product — every field above stays
-            editable once you&rsquo;re in the Studio. Pricing shown there is a demo
+            editable once you&rsquo;re in the Studio. Pricing shown there is an
             estimate; a final quote follows technical review.
           </p>
         </div>

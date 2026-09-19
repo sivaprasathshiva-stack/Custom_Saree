@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { PageIntro } from "@/components/marketing/page-intro";
+import { BackButton } from "@/components/ui/back-button";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export const metadata = { title: "Account — VELVOREA" };
@@ -35,6 +36,7 @@ export default async function AccountPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-24">
+      <BackButton className="mb-8" fallbackHref="/" />
       <p className="font-mono text-xs uppercase tracking-[0.15em] text-gray">Account</p>
       <h1 className="mt-2 font-display text-3xl text-ink">{user.email}</h1>
 

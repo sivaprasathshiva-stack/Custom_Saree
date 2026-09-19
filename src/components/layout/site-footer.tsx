@@ -82,7 +82,7 @@ export function SiteFooter() {
         </div>
 
         <div className="flex flex-col items-start justify-between gap-4 pt-8 text-sm text-stone md:flex-row md:items-center">
-          <span>© {new Date().getFullYear()} VELVOREA. Content shown is placeholder demo data.</span>
+          <span>© {new Date().getFullYear()} VELVOREA. Handwoven in Elampillai, Salem, Tamil Nadu.</span>
           <div className="flex gap-6">
             <Link href="/terms" className="hover:text-ivory">Terms</Link>
             <Link href="/privacy" className="hover:text-ivory">Privacy</Link>
