@@ -4,14 +4,11 @@
 
 Supabase Auth via `@supabase/ssr`: email/password sign-up/sign-in, Google OAuth (UI wired, provider needs enabling in the Supabase dashboard — outstanding user action, not a code gap), password reset flow, session refresh via `src/middleware.ts`. Every design row is owned (`designs.user_id`) and RLS-enforced.
 
-## Reconciling with requirements §5/§14 ("Google Sign-In" only, no username/password for MVP)
+## RESOLVED (confirmed by user): Google-only for the Studio
 
-Recommendation: **keep both**, don't remove email/password. Reasoning:
-- Email/password already works in production; removing it is a regression with no user benefit, done solely to match a spec line written before this session's work existed.
-- Google OAuth is additive on the same Supabase Auth users table — no architectural conflict between the two.
-- The actual requirement being served ("frictionless sign-in, no separate account creation burden") is satisfied by Google being available and default-promoted in the UI, not by email/password being absent.
+The Studio's own sign-in entry point (reached via `/studio`, distinct from the general site's `/auth/login`) uses Google exclusively — no email/password form shown there. Rationale for scoping it this way rather than removing email/password sitewide: email/password already works in production for the general site (`/account`, `/auth/login`) and removing it there would be a regression with no requested benefit; the requirement is specifically about the Studio's entry experience (§5/§14's login screen mockup), which this satisfies without touching the already-shipped general auth.
 
-Flagged as an open question in `17-open-questions.md` rather than assumed — reverse this if you disagree.
+Implementation: the existing `AuthForm` component (`src/components/auth/auth-form.tsx`) already renders the Google button first and email/password below a divider — for the Studio-specific entry point, render only the Google button (a `googleOnly` prop, or a small dedicated `StudioAuthGate` component — decide at implementation time based on how much the two entry points actually need to diverge).
 
 ## What's needed for Textile Studio specifically
 
