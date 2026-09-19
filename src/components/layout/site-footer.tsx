@@ -49,7 +49,7 @@ export function SiteFooter() {
           <div className="col-span-2">
             <div className="flex items-center gap-2.5">
               <Image
-                src="/assets/brand/velvorea/velvorea-logo-mark.png"
+                src="/assets/brand/velvorea/velvorea-logo-white.png"
                 alt="VELVOREA"
                 width={44}
                 height={44}

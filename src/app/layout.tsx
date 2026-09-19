@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo, Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { SiteLoader } from "@/components/layout/site-loader";
 
 const display = Archivo({
   variable: "--font-display",
@@ -36,6 +37,7 @@ export default function RootLayout({
       <body
         className={`${display.variable} ${sans.variable} ${mono.variable} antialiased bg-ivory text-charcoal`}
       >
+        <SiteLoader />
         {children}
       </body>
     </html>

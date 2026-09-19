@@ -24,7 +24,7 @@ export function SiteNav() {
       <div className="mx-auto flex h-18 max-w-[1600px] items-center justify-between px-6 py-4 md:px-10">
         <Link href="/" className="flex items-center gap-2.5">
           <Image
-            src="/assets/brand/velvorea/velvorea-logo-mark.png"
+            src="/assets/brand/velvorea/velvorea-logo-black.png"
             alt="VELVOREA"
             width={40}
             height={40}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { StatusBadge } from "@/components/ui/section-label";
 import {
   StudioStep,
@@ -268,7 +269,16 @@ export function StudioShell() {
       {/* Top bar */}
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-line-dark px-4 md:px-6">
         <div className="flex items-center gap-4 md:gap-6">
-          <span className="font-display text-lg tracking-wide">VELVOREA</span>
+          <div className="flex items-center gap-2">
+            <Image
+              src="/assets/brand/velvorea/velvorea-logo-white.png"
+              alt="VELVOREA"
+              width={28}
+              height={28}
+              className="h-6 w-6 object-contain"
+            />
+            <span className="font-display text-lg tracking-wide">VELVOREA</span>
+          </div>
           <span className="hidden h-4 w-px bg-line-dark md:block" />
           <div className="hidden flex-col leading-tight md:flex">
             <input
