@@ -84,7 +84,7 @@ export default function Home() {
           </p>
           <div className="mt-9 flex flex-wrap gap-4">
             <Button href="/studio" variant="dark">Start designing</Button>
-            <Button href="/craft" variant="secondary" className="border-ivory text-ivory hover:bg-ivory hover:text-charcoal">
+            <Button href="/craft" variant="inverted">
               Explore the craft
             </Button>
           </div>
