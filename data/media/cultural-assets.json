@@ -1,0 +1,53 @@
+[
+  {
+    "id": "met-silk-animal-carpet",
+    "title": "Silk Animal Carpet",
+    "institution": "The Metropolitan Museum of Art",
+    "date": "second half 16th century",
+    "medium": "Silk (warp, weft and pile), metal wrapped thread; cut and voided solid velvet",
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/446642",
+    "imageUrl": "https://images.metmuseum.org/CRDImages/is/original/DP170032.jpg",
+    "localPath": "/media/archive/met-carpet-silk-animal-carpet.jpg",
+    "rightsStatus": "PUBLIC_DOMAIN",
+    "licenseUrl": "https://www.metmuseum.org/policies/open-access",
+    "attributionRequired": false,
+    "attributionText": "The Metropolitan Museum of Art, Open Access",
+    "category": "archive",
+    "tags": ["silk", "weaving", "historical motif"],
+    "intendedUse": "editorial — historical textile reference, not company product"
+  },
+  {
+    "id": "met-tapestry-room-croome-court",
+    "title": "Tapestry Room from Croome Court",
+    "institution": "The Metropolitan Museum of Art",
+    "date": "ca. 1763–71",
+    "medium": "Silk and wool tapestry, woven interior",
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/320054",
+    "imageUrl": "https://images.metmuseum.org/CRDImages/es/original/DT234448.jpg",
+    "localPath": "/media/archive/met-period-room-tapestry-room-from-croome-court.jpg",
+    "rightsStatus": "PUBLIC_DOMAIN",
+    "licenseUrl": "https://www.metmuseum.org/policies/open-access",
+    "attributionRequired": false,
+    "attributionText": "The Metropolitan Museum of Art, Open Access",
+    "category": "archive",
+    "tags": ["silk", "tapestry", "interior textile"],
+    "intendedUse": "editorial — historical textile reference, not company product"
+  },
+  {
+    "id": "met-textile-fragment",
+    "title": "Textile Fragment",
+    "institution": "The Metropolitan Museum of Art",
+    "date": "historical",
+    "medium": "Woven textile fragment",
+    "sourceUrl": "https://www.metmuseum.org/art/collection/search/36225",
+    "imageUrl": "https://images.metmuseum.org/CRDImages/is/original/DP-13503-001.jpg",
+    "localPath": "/media/archive/met-textile-fragment-textile-fragment.jpg",
+    "rightsStatus": "PUBLIC_DOMAIN",
+    "licenseUrl": "https://www.metmuseum.org/policies/open-access",
+    "attributionRequired": false,
+    "attributionText": "The Metropolitan Museum of Art, Open Access",
+    "category": "archive",
+    "tags": ["textile", "weave structure", "historical motif"],
+    "intendedUse": "editorial — historical textile reference, not company product"
+  }
+]

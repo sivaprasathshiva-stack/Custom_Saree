@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
+import { ArchiveGrid } from "@/components/marketing/archive-grid";
+import { materials, palette, borders } from "@/components/studio/studio-data";
 
 const silks = [
   { name: "Kanchipuram Pure Silk", code: "KAN-001", note: "Handloom · Zari compatible" },
@@ -121,12 +123,32 @@ export default function Home() {
               <Button href="/studio" variant="dark">Enter the Textile Studio</Button>
             </div>
           </div>
-          <MediaPlaceholder
-            label="Textile Studio — Live Canvas"
-            ratio="aspect-[4/3]"
-            hint="Product screenshot / interactive preview"
-            dark
-          />
+          <div className="flex aspect-[4/3] items-center justify-center border border-line-dark bg-charcoal-soft p-10">
+            <div className="flex h-full w-[38%] flex-col border border-line-dark">
+              <div
+                className="flex h-1/4 items-center justify-center border-b text-[9px] text-ivory/60"
+                style={{ backgroundColor: palette[0].hex, borderColor: palette[1].hex }}
+              >
+                Pallu
+              </div>
+              <div
+                className="flex flex-1 items-center justify-center text-[9px] text-ivory/40"
+                style={{
+                  backgroundColor: palette[0].hex,
+                  backgroundImage:
+                    "repeating-linear-gradient(45deg, rgba(246,242,234,0.06) 0, rgba(246,242,234,0.06) 2px, transparent 2px, transparent 12px)",
+                }}
+              >
+                {materials[0].name}
+              </div>
+              <div
+                className="flex h-8 items-center justify-center text-[9px] text-charcoal/70"
+                style={{ backgroundColor: palette[1].hex }}
+              >
+                {borders[0].name}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -152,6 +174,25 @@ export default function Home() {
               Meet the weavers
             </Button>
           </div>
+        </div>
+      </section>
+
+      {/* From the archive */}
+      <section className="border-t border-line bg-ivory-deep">
+        <div className="mx-auto max-w-[1600px] px-6 py-28 md:px-10">
+          <SectionLabel>From the archive</SectionLabel>
+          <p className="mt-6 max-w-2xl font-display text-3xl leading-snug text-charcoal md:text-4xl">
+            Motifs and weave structures travel across centuries. SĀRĪ Studio's
+            material library draws on that history without claiming it.
+          </p>
+          <div className="mt-12">
+            <ArchiveGrid />
+          </div>
+          <p className="mt-8 max-w-xl text-sm text-stone">
+            Public-domain works shown for research and inspiration only, via The
+            Metropolitan Museum of Art's Open Access program. SĀRĪ Studio has no
+            affiliation with and does not claim to have made these objects.
+          </p>
         </div>
       </section>
 
