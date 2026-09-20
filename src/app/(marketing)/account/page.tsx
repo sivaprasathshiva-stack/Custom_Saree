@@ -3,6 +3,8 @@ import Link from "next/link";
 import { PageIntro } from "@/components/marketing/page-intro";
 import { BackButton } from "@/components/ui/back-button";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { DeleteAccountButton } from "@/components/account/delete-account-button";
+import { PhoneForm } from "@/components/account/phone-form";
 
 export const metadata = { title: "Account — VELVOREA" };
 
@@ -33,6 +35,12 @@ export default async function AccountPage() {
     .select("id, name, updated_at")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false });
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("phone, country")
+    .eq("id", user.id)
+    .maybeSingle();
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-24">
@@ -69,6 +77,14 @@ export default async function AccountPage() {
         )}
       </section>
 
+      <section className="mt-12 border-t border-line pt-8">
+        <h2 className="font-display text-xl text-ink">Contact details</h2>
+        <p className="mt-2 text-sm text-gray">
+          Required before submitting a design to VELVOREA for production review.
+        </p>
+        <PhoneForm initialPhone={profile?.phone ?? ""} initialCountry={profile?.country ?? ""} />
+      </section>
+
       <section className="mt-12 flex flex-wrap gap-6 border-t border-line pt-8 text-sm">
         <Link href="/orders" className="text-ink underline underline-offset-4">
           Orders
@@ -86,6 +102,13 @@ export default async function AccountPage() {
           Sign out
         </button>
       </form>
+
+      <section className="mt-12 border-t border-line pt-8">
+        <h2 className="font-display text-xl text-ink">Danger zone</h2>
+        <div className="mt-4">
+          <DeleteAccountButton />
+        </div>
+      </section>
     </div>
   );
 }

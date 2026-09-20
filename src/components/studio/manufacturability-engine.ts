@@ -1,4 +1,4 @@
-import { borders, zariOptions } from "./studio-data";
+import { borders, zariOptions, materials, weavesForMaterial } from "./studio-data";
 import type { ManufacturabilityCheck, SareeDesign } from "./types";
 
 /**
@@ -11,7 +11,20 @@ import type { ManufacturabilityCheck, SareeDesign } from "./types";
 export function checkManufacturability(design: SareeDesign): ManufacturabilityCheck[] {
   const border = borders.find((b) => b.id === design.borderId) ?? borders[0];
   const zari = zariOptions.find((z) => z.id === design.zariId) ?? zariOptions[0];
+  const material = materials.find((m) => m.id === design.materialId) ?? materials[0];
   const checks: ManufacturabilityCheck[] = [];
+
+  // Not every weave suits every material (studio-data.ts `weaveFamily`) —
+  // this mainly catches an older/imported design saved before Phase 3 added
+  // `weaveId`, or a design edited outside the normal Studio UI flow.
+  const weaveCompatible = weavesForMaterial(material.id).some((w) => w.id === design.weaveId);
+  checks.push({
+    label: "Weave compatible with material",
+    status: weaveCompatible ? "ready" : "review",
+    note: weaveCompatible
+      ? undefined
+      : `${material.name} does not list this weave as supported — confirm with the loom before production`,
+  });
 
   if (design.artwork.layers.length === 0) {
     checks.push({

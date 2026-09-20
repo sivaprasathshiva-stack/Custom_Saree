@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Archivo, Inter, IBM_Plex_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { SiteLoader } from "@/components/layout/site-loader";
+import { WebVitalsReporter } from "@/components/web-vitals-reporter";
 
 const display = Archivo({
   variable: "--font-display",
@@ -38,7 +41,10 @@ export default function RootLayout({
         className={`${display.variable} ${sans.variable} ${mono.variable} antialiased bg-ivory text-charcoal`}
       >
         <SiteLoader />
+        <WebVitalsReporter />
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

@@ -20,6 +20,7 @@ describe("computePrice", () => {
             id: "a1",
             name: "Motif",
             visible: true,
+            placement: "body" as const,
             dataUrl: "data:image/png;base64,",
             fileName: "motif.png",
             transform: { x: 0, y: 0, scale: 1, rotation: 0 },
@@ -42,5 +43,12 @@ describe("computePrice", () => {
     const premium = computePrice({ ...base, zariId: "premium" });
     const imitation = computePrice({ ...base, zariId: "imitation" });
     expect(premium.leadTimeDaysMax).toBeGreaterThan(imitation.leadTimeDaysMax);
+  });
+
+  it("charges more for a brocade weave than a plain weave", () => {
+    const base = createDefaultDesign();
+    const plain = computePrice({ ...base, weaveId: "plain" });
+    const brocade = computePrice({ ...base, weaveId: "brocade" });
+    expect(brocade.total).toBeGreaterThan(plain.total);
   });
 });

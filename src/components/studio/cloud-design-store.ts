@@ -1,13 +1,49 @@
 "use client";
 
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
-import type { DesignVersion, SareeDesign } from "./types";
+import type { DesignVersion, PersistedSareeDesign, SareeDesign } from "./types";
 
 /**
  * Cloud-backed counterpart to local-design-store.ts, for signed-in users.
  * Same shape (current design + a version list) so Studio can swap stores
  * based on auth state without changing its own logic.
+ *
+ * Phase 2 migration: `designs.design`/`design_versions.design` now store the
+ * reference-structure shape (`PersistedSareeDesign`, types.ts) — artwork
+ * layers keep their id/name/fileName/transform/visible but never their
+ * base64 `dataUrl`. See the comment on PersistedSareeDesign for why and what
+ * the current limitation is (no cross-device artwork sync until Phase 4's
+ * object storage lands).
  */
+
+export function toPersisted(design: SareeDesign): PersistedSareeDesign {
+  return {
+    ...design,
+    artwork: {
+      ...design.artwork,
+      layers: design.artwork.layers.map((layer) => {
+        const { dataUrl, ...rest } = layer;
+        void dataUrl;
+        return rest;
+      }),
+    },
+  };
+}
+
+export function fromPersisted(persisted: PersistedSareeDesign): SareeDesign {
+  return {
+    ...persisted,
+    artwork: {
+      ...persisted.artwork,
+      layers: persisted.artwork.layers.map((layer) => ({
+        ...layer,
+        dataUrl: "",
+        // Backfill for rows written before `placement` existed (Phase 3.5).
+        placement: layer.placement ?? "body",
+      })),
+    },
+  };
+}
 
 export async function getUser() {
   if (!isSupabaseConfigured()) return null;
@@ -27,7 +63,8 @@ export async function loadCurrentDesignCloud(userId: string): Promise<SareeDesig
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  return (data?.design as SareeDesign) ?? null;
+  if (!data?.design) return null;
+  return fromPersisted(data.design as PersistedSareeDesign);
 }
 
 export async function saveCurrentDesignCloud(
@@ -35,6 +72,7 @@ export async function saveCurrentDesignCloud(
   design: SareeDesign,
 ): Promise<boolean> {
   const supabase = createClient();
+  const persisted = toPersisted(design);
   const { data: existing } = await supabase
     .from("designs")
     .select("id")
@@ -46,14 +84,14 @@ export async function saveCurrentDesignCloud(
   if (existing?.id) {
     const { error } = await supabase
       .from("designs")
-      .update({ design, name: design.name, updated_at: new Date().toISOString() })
+      .update({ design: persisted, name: design.name, updated_at: new Date().toISOString() })
       .eq("id", existing.id);
     return !error;
   }
 
   const { error } = await supabase
     .from("designs")
-    .insert({ user_id: userId, name: design.name, design });
+    .insert({ user_id: userId, name: design.name, design: persisted });
   return !error;
 }
 
@@ -69,7 +107,7 @@ export async function loadVersionsCloud(userId: string): Promise<DesignVersion[]
     id: row.id,
     label: row.label,
     createdAt: row.created_at,
-    design: row.design as SareeDesign,
+    design: fromPersisted(row.design as PersistedSareeDesign),
   }));
 }
 
@@ -84,7 +122,7 @@ export async function saveVersionCloud(
     design_id: designId,
     user_id: userId,
     label: version.label,
-    design: version.design,
+    design: toPersisted(version.design),
   });
   return !error;
 }
@@ -102,7 +140,7 @@ export async function getOrCreateDesignId(userId: string, design: SareeDesign): 
 
   const { data, error } = await supabase
     .from("designs")
-    .insert({ user_id: userId, name: design.name, design })
+    .insert({ user_id: userId, name: design.name, design: toPersisted(design) })
     .select("id")
     .single();
   if (error) return null;

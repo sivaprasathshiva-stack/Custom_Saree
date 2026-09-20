@@ -22,6 +22,20 @@ describe("checkManufacturability", () => {
     const repeatCheck = checks.find((c) => c.label === "Repeat dimensions");
     expect(repeatCheck?.status).toBe("ready");
   });
+
+  it("flags a weave the material doesn't list as supported for review", () => {
+    const design = { ...createDefaultDesign(), materialId: "tus", weaveId: "brocade" };
+    const checks = checkManufacturability(design);
+    const weaveCheck = checks.find((c) => c.label === "Weave compatible with material");
+    expect(weaveCheck?.status).toBe("review");
+  });
+
+  it("passes a weave the material lists as supported", () => {
+    const design = { ...createDefaultDesign(), materialId: "kan", weaveId: "brocade" };
+    const checks = checkManufacturability(design);
+    const weaveCheck = checks.find((c) => c.label === "Weave compatible with material");
+    expect(weaveCheck?.status).toBe("ready");
+  });
 });
 
 describe("overallStatus", () => {

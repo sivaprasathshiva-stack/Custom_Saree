@@ -23,12 +23,44 @@ describe("designReducer", () => {
     expect(next.paletteHexBySlot.base).toBe(state.paletteHexBySlot.base);
   });
 
+  it("SET_COLOUR supports the Phase 3 motif and blouse slots", () => {
+    const state = createDefaultDesign();
+    const withMotif = designReducer(state, { type: "SET_COLOUR", slot: "motif", hex: "#222222" });
+    expect(withMotif.paletteHexBySlot.motif).toBe("#222222");
+    const withBlouse = designReducer(withMotif, { type: "SET_COLOUR", slot: "blouse", hex: "#333333" });
+    expect(withBlouse.paletteHexBySlot.blouse).toBe("#333333");
+    // Untouched slots stay as-is.
+    expect(withBlouse.paletteHexBySlot.motif).toBe("#222222");
+  });
+
+  it("SET_WEAVE changes only the weave", () => {
+    const state = createDefaultDesign();
+    const next = designReducer(state, { type: "SET_WEAVE", weaveId: "brocade" });
+    expect(next.weaveId).toBe("brocade");
+    expect(next.materialId).toBe(state.materialId);
+  });
+
+  it("SET_MATERIAL re-picks a compatible weave when the current one no longer applies", () => {
+    const state = { ...createDefaultDesign(), materialId: "kan", weaveId: "brocade" };
+    // Tussar silk doesn't support brocade (studio-data.ts weaveFamily).
+    const next = designReducer(state, { type: "SET_MATERIAL", materialId: "tus" });
+    expect(next.materialId).toBe("tus");
+    expect(next.weaveId).not.toBe("brocade");
+  });
+
+  it("SET_MATERIAL keeps the current weave when the new material still supports it", () => {
+    const state = { ...createDefaultDesign(), materialId: "kan", weaveId: "jacquard" };
+    const next = designReducer(state, { type: "SET_MATERIAL", materialId: "mys" });
+    expect(next.weaveId).toBe("jacquard");
+  });
+
   it("ARTWORK_READY appends a layer and makes it active", () => {
     const state = createDefaultDesign();
     const layer = {
       id: "l1",
       name: "Motif",
       visible: true,
+      placement: "body" as const,
       dataUrl: "data:image/png;base64,",
       fileName: "motif.png",
       transform: { x: 0, y: 0, scale: 1, rotation: 0 },
@@ -45,6 +77,7 @@ describe("designReducer", () => {
       id: "l1",
       name: "Motif",
       visible: true,
+      placement: "body" as const,
       dataUrl: "data:image/png;base64,",
       fileName: "motif.png",
       transform: { x: 0, y: 0, scale: 1, rotation: 0 },

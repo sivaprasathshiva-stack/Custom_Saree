@@ -1,16 +1,21 @@
-import { materials, palette, borders, pallus, zariOptions, studioPresets } from "./studio-data";
-import type { ArtworkLayer, ArtworkTransform, SareeDesign } from "./types";
+import { materials, borders, pallus, zariOptions, studioPresets, weavesForMaterial } from "./studio-data";
+import type { ArtworkLayer, ArtworkPlacement, ArtworkTransform, SareeDesign } from "./types";
 
 export function createDefaultDesign(presetId?: string): SareeDesign {
   const preset = presetId ? studioPresets[presetId] : undefined;
+  const materialId = preset?.materialId ?? materials[0].id;
+  const weaveId = preset?.weaveId ?? weavesForMaterial(materialId)[0]?.id ?? "plain";
   return {
     name: preset ? preset.name : "Untitled design",
-    materialId: preset?.materialId ?? materials[0].id,
+    materialId,
+    weaveId,
     paletteHexBySlot: {
-      base: palette[0].hex,
-      border: palette[1].hex,
-      pallu: palette[2].hex,
-      accent: palette[3].hex,
+      base: "#5c1a2b",
+      border: "#a9812f",
+      pallu: "#f6f2ea",
+      accent: "#232a4d",
+      motif: "#a9812f",
+      blouse: "#5c1a2b",
     },
     artwork: { status: "empty", layers: [] },
     repeat: { type: "straight", widthCm: 18, heightCm: 18 },
@@ -23,6 +28,7 @@ export function createDefaultDesign(presetId?: string): SareeDesign {
 export type DesignAction =
   | { type: "SET_NAME"; name: string }
   | { type: "SET_MATERIAL"; materialId: string }
+  | { type: "SET_WEAVE"; weaveId: string }
   | { type: "SET_COLOUR"; slot: keyof SareeDesign["paletteHexBySlot"]; hex: string }
   | { type: "SET_REPEAT_TYPE"; repeatType: SareeDesign["repeat"]["type"] }
   | { type: "SET_REPEAT_SIZE"; widthCm: number; heightCm: number }
@@ -33,6 +39,7 @@ export type DesignAction =
   | { type: "ARTWORK_UPLOAD_ERROR"; error: string }
   | { type: "ARTWORK_READY"; layer: ArtworkLayer }
   | { type: "ARTWORK_TRANSFORM"; layerId: string; transform: Partial<ArtworkTransform> }
+  | { type: "ARTWORK_SET_PLACEMENT"; layerId: string; placement: ArtworkPlacement }
   | { type: "ARTWORK_REMOVE"; layerId: string }
   | { type: "ARTWORK_TOGGLE_VISIBLE"; layerId: string }
   | { type: "ARTWORK_SET_ACTIVE"; layerId: string }
@@ -42,8 +49,19 @@ export function designReducer(state: SareeDesign, action: DesignAction): SareeDe
   switch (action.type) {
     case "SET_NAME":
       return { ...state, name: action.name };
-    case "SET_MATERIAL":
-      return { ...state, materialId: action.materialId };
+    case "SET_MATERIAL": {
+      // A material only supports a subset of weaves (studio-data.ts
+      // `weaveFamily`); switching material re-picks a compatible weave if
+      // the current one no longer applies, rather than leaving the design
+      // in an invalid material/weave combination.
+      const compatibleWeaves = weavesForMaterial(action.materialId);
+      const weaveId = compatibleWeaves.some((w) => w.id === state.weaveId)
+        ? state.weaveId
+        : compatibleWeaves[0]?.id ?? state.weaveId;
+      return { ...state, materialId: action.materialId, weaveId };
+    }
+    case "SET_WEAVE":
+      return { ...state, weaveId: action.weaveId };
     case "SET_COLOUR":
       return {
         ...state,
@@ -87,6 +105,16 @@ export function designReducer(state: SareeDesign, action: DesignAction): SareeDe
           ),
         },
       };
+    case "ARTWORK_SET_PLACEMENT":
+      return {
+        ...state,
+        artwork: {
+          ...state.artwork,
+          layers: state.artwork.layers.map((l) =>
+            l.id === action.layerId ? { ...l, placement: action.placement } : l
+          ),
+        },
+      };
     case "ARTWORK_REMOVE": {
       const layers = state.artwork.layers.filter((l) => l.id !== action.layerId);
       return {
@@ -122,6 +150,7 @@ export function designReducer(state: SareeDesign, action: DesignAction): SareeDe
 export const HISTORY_SIGNIFICANT_ACTIONS = new Set<DesignAction["type"]>([
   "SET_NAME",
   "SET_MATERIAL",
+  "SET_WEAVE",
   "SET_COLOUR",
   "SET_REPEAT_TYPE",
   "SET_REPEAT_SIZE",

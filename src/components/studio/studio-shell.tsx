@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { StatusBadge } from "@/components/ui/section-label";
 import {
   StudioStep,
@@ -11,6 +12,8 @@ import {
   borders,
   pallus,
   zariOptions,
+  weaves,
+  weavesForMaterial,
 } from "./studio-data";
 import { createDefaultDesign } from "./design-reducer";
 import { useDesignHistory } from "./use-design-history";
@@ -32,6 +35,7 @@ import {
 } from "./cloud-design-store";
 import type { ArtworkLayer, DesignVersion, SareeDesign, ManufacturabilityCheck, PriceResult } from "./types";
 import type { DesignAction } from "./design-reducer";
+import { diffDesigns } from "./design-diff";
 import type { User } from "@supabase/supabase-js";
 
 const inr = new Intl.NumberFormat("en-IN", {
@@ -43,15 +47,77 @@ const inr = new Intl.NumberFormat("en-IN", {
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/svg+xml"];
 
+type SaveStatus = "idle" | "saving" | "saved" | "failed";
+
+const AUTOSAVE_DEBOUNCE_MS = 1500;
+
+/**
+ * Renders one artwork layer's image (or its re-upload placeholder) at its
+ * saved transform. `draggable` is only true for body placement, which is
+ * the one region with a real drag-to-position drop target
+ * (onArtworkPointerDown/Move/Up in StudioShell) — border/pallu placement
+ * (PRD §13/§17) centers the layer in its strip; full per-region dragging is
+ * Phase 6/7 canvas-engine scope, not this pass.
+ */
+function ArtworkLayerPreview({ layer, draggable = false }: { layer: ArtworkLayer; draggable?: boolean }) {
+  const style = draggable
+    ? {
+        position: "absolute" as const,
+        left: `${50 + layer.transform.x}%`,
+        top: `${50 + layer.transform.y}%`,
+        transform: `translate(-50%, -50%) scale(${layer.transform.scale}) rotate(${layer.transform.rotation}deg)`,
+      }
+    : {
+        transform: `scale(${layer.transform.scale}) rotate(${layer.transform.rotation}deg)`,
+      };
+
+  return (
+    <div style={style}>
+      {layer.dataUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={layer.dataUrl}
+          alt={layer.name}
+          className="max-h-32 max-w-32 object-contain"
+          draggable={false}
+        />
+      ) : (
+        // A design loaded from the cloud stores artwork metadata only
+        // (Phase 2 — no base64 in the DB blob); pixel data isn't synced
+        // across devices until Phase 4's object storage lands, so this
+        // layer needs re-upload here.
+        <div className="flex h-24 w-24 flex-col items-center justify-center gap-1 border border-dashed border-line-dark bg-charcoal-soft px-2 text-center">
+          <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-stone">{layer.fileName}</span>
+          <span className="font-mono text-[8px] text-stone">Re-upload to view</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// PRODUCT RULE — do not add a download/export affordance here (PRD §25/§30,
+// NFR-018 "no customer export"). No PNG/JPG/PDF/SVG/JSON/3D-file download of
+// any kind is ever offered to the customer, from any Studio surface — this
+// is deliberate IP protection, not an oversight. If you're tempted to add a
+// "Save image"/"Export"/"Download" button to this component or its preview
+// canvas, don't — that capability belongs only in the (not-yet-built)
+// designer/admin workspace, and even there it needs a product decision
+// first. The preview canvas below also blocks the browser's own
+// right-click "Save image as…" via onContextMenu — see that handler.
 export function StudioShell() {
+  const router = useRouter();
   const [activeStep, setActiveStep] = useState<StudioStep>("material");
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [savedSecondsAgo, setSavedSecondsAgo] = useState<number | null>(null);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [versions, setVersions] = useState<DesignVersion[]>(() => loadVersions());
+  const [compareIds, setCompareIds] = useState<[string, string] | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const cloudDesignId = useRef<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
   const {
     design,
@@ -89,6 +155,7 @@ export function StudioShell() {
           reset(cloudDesign);
           const cloudVersions = await loadVersionsCloud(currentUser.id);
           if (!cancelled) setVersions(cloudVersions);
+          hasLoadedRef.current = true;
           return;
         }
       }
@@ -96,12 +163,14 @@ export function StudioShell() {
       const saved = loadCurrentDesign();
       if (saved) {
         reset(saved);
+        hasLoadedRef.current = true;
         return;
       }
       const params = new URLSearchParams(window.location.search);
       const presetId = params.get("preset");
       if (presetId) {
         reset(createDefaultDesign(presetId));
+        hasLoadedRef.current = true;
         return;
       }
       // Material-card handoff from the homepage/materials pages, e.g.
@@ -112,6 +181,7 @@ export function StudioShell() {
         const base = createDefaultDesign();
         reset({ ...base, materialId });
       }
+      hasLoadedRef.current = true;
     }
 
     init();
@@ -129,16 +199,46 @@ export function StudioShell() {
     return () => clearInterval(interval);
   }, [lastSavedAt]);
 
-  const handleSave = useCallback(() => {
-    const ok = saveCurrentDesign(design);
-    if (ok) {
+  // Real Saving/Saved/Failed states (§51): local save is synchronous and
+  // essentially can't fail (aside from storage quota), so "failed" here
+  // reflects the cloud write specifically — the state most worth surfacing
+  // since it's the one silent-data-loss risk (a user believing their work
+  // reached their account when it didn't).
+  const handleSave = useCallback(async () => {
+    setSaveStatus("saving");
+    setSaveError(null);
+    const localOk = saveCurrentDesign(design);
+    if (localOk) {
       setLastSavedAt(Date.now());
       setSavedSecondsAgo(0);
     }
-    if (user) {
-      saveCurrentDesignCloud(user.id, design);
+    if (!user) {
+      setSaveStatus(localOk ? "saved" : "failed");
+      if (!localOk) setSaveError("Couldn't save to this device (local storage unavailable).");
+      return;
+    }
+    try {
+      const cloudOk = await saveCurrentDesignCloud(user.id, design);
+      setSaveStatus(cloudOk ? "saved" : "failed");
+      if (!cloudOk) setSaveError("Couldn't save to your account. Check your connection and retry.");
+    } catch {
+      setSaveStatus("failed");
+      setSaveError("Couldn't reach the server. Check your connection and retry.");
     }
   }, [design, user]);
+
+  // Autosave: debounced 1.5s after any design change (§52/14-performance-strategy.md),
+  // so it doesn't fire per-keystroke/per-drag-tick. Skipped until the initial
+  // load (cloud/local/preset) has resolved, so autosave never clobbers a
+  // cloud design with the transient default design shown before load.
+  useEffect(() => {
+    if (!hasLoadedRef.current) return;
+    const timer = setTimeout(() => {
+      handleSave();
+    }, AUTOSAVE_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [design]);
 
   // Keyboard shortcuts.
   useEffect(() => {
@@ -159,6 +259,23 @@ export function StudioShell() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [undo, redo, handleSave]);
+
+  // Complete Design (PRD §23-24): make sure the current design has a stable
+  // cloud id, then hand off to the Concept Review screen. Requires a signed
+  // -in user because submissions are tied to a real designs.id row —
+  // matches how version history already behaves (getOrCreateDesignId).
+  const handleCompleteDesign = useCallback(async () => {
+    handleSave();
+    if (!user) {
+      router.push("/studio");
+      return;
+    }
+    const designId = cloudDesignId.current ?? (await getOrCreateDesignId(user.id, design));
+    cloudDesignId.current = designId;
+    if (designId) {
+      router.push(`/studio/${designId}/complete`);
+    }
+  }, [design, handleSave, router, user]);
 
   const handleSaveVersion = useCallback(() => {
     const version: DesignVersion = {
@@ -226,6 +343,7 @@ export function StudioShell() {
             id: `layer-${Date.now()}`,
             name: file.name.replace(/\.[^.]+$/, ""),
             visible: true,
+            placement: "body",
             dataUrl,
             fileName: file.name,
             transform: { x: 0, y: 0, scale: 1, rotation: 0 },
@@ -298,6 +416,7 @@ export function StudioShell() {
   };
 
   const material = materials.find((m) => m.id === design.materialId)!;
+  const weave = weaves.find((w) => w.id === design.weaveId) ?? weaves[0];
   const border = borders.find((b) => b.id === design.borderId)!;
   const pallu = pallus.find((p) => p.id === design.palluId)!;
   const zari = zariOptions.find((z) => z.id === design.zariId)!;
@@ -337,14 +456,28 @@ export function StudioShell() {
               className="bg-transparent font-mono text-xs uppercase tracking-[0.1em] text-ivory outline-none"
               aria-label="Design name"
             />
-            <span className="font-mono text-[10px] text-stone">
-              {savedSecondsAgo === null
-                ? "Not saved yet"
-                : savedSecondsAgo === 0
-                ? user
-                  ? "Saved to your account"
-                  : "Saved on this device"
-                : `Saved ${savedSecondsAgo}s ago`}
+            <span className="flex items-center gap-2 font-mono text-[10px] text-stone">
+              {saveStatus === "saving" && "Saving…"}
+              {saveStatus === "failed" && (
+                <>
+                  <span className="text-danger">{saveError ?? "Save failed"}</span>
+                  <button
+                    onClick={handleSave}
+                    className="text-brass-bright underline underline-offset-2 hover:text-brass"
+                  >
+                    Retry
+                  </button>
+                </>
+              )}
+              {saveStatus !== "saving" &&
+                saveStatus !== "failed" &&
+                (savedSecondsAgo === null
+                  ? "Not saved yet"
+                  : savedSecondsAgo === 0
+                  ? user
+                    ? "Saved to your account"
+                    : "Saved on this device"
+                  : `Saved ${savedSecondsAgo}s ago`)}
             </span>
           </div>
         </div>
@@ -383,8 +516,11 @@ export function StudioShell() {
           >
             Save version ({versions.length})
           </button>
-          <button className="bg-brass-bright px-3 py-2 text-charcoal hover:bg-ivory md:px-4">
-            Request sample
+          <button
+            onClick={handleCompleteDesign}
+            className="bg-brass-bright px-3 py-2 text-charcoal hover:bg-ivory md:px-4"
+          >
+            Complete Design
           </button>
         </div>
       </div>
@@ -448,10 +584,18 @@ export function StudioShell() {
               backgroundSize: "32px 32px",
             }}
           />
-          <div className="relative flex aspect-[3/8] h-[62vh] flex-col border border-line-dark bg-charcoal shadow-[0_0_0_1px_rgba(255,255,255,0.02)] md:h-[70vh]">
+          <div
+            className="relative flex aspect-[3/8] h-[62vh] flex-col border border-line-dark bg-charcoal shadow-[0_0_0_1px_rgba(255,255,255,0.02)] md:h-[70vh]"
+            // No-export product rule (PRD §30): the Studio never offers a
+            // download/save-image affordance for this preview — see the
+            // guard note above the return statement of StudioShell. This
+            // only blocks the browser's own right-click "Save image as…",
+            // it does not affect keyboard/assistive-tech interaction.
+            onContextMenu={(e) => e.preventDefault()}
+          >
             {/* Pallu */}
             <div
-              className="flex h-1/4 items-center justify-center border-b"
+              className="relative flex h-1/4 items-center justify-center border-b"
               style={{
                 backgroundColor: design.paletteHexBySlot.base,
                 borderColor: design.paletteHexBySlot.border,
@@ -460,6 +604,9 @@ export function StudioShell() {
               <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-ivory/70">
                 Pallu — {pallu.name}
               </span>
+              {activeLayer && (activeLayer.placement ?? "body") === "pallu" && (
+                <ArtworkLayerPreview layer={activeLayer} />
+              )}
             </div>
             {/* Body — repeat tile + artwork drop target */}
             <div
@@ -475,33 +622,19 @@ export function StudioShell() {
               onPointerMove={onArtworkPointerMove}
               onPointerUp={onArtworkPointerUp}
             >
-              {activeLayer ? (
-                <div
-                  onPointerDown={onArtworkPointerDown}
-                  className="absolute cursor-grab touch-none select-none active:cursor-grabbing"
-                  style={{
-                    left: `${50 + activeLayer.transform.x}%`,
-                    top: `${50 + activeLayer.transform.y}%`,
-                    transform: `translate(-50%, -50%) scale(${activeLayer.transform.scale}) rotate(${activeLayer.transform.rotation}deg)`,
-                  }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={activeLayer.dataUrl}
-                    alt={activeLayer.name}
-                    className="max-h-32 max-w-32 object-contain"
-                    draggable={false}
-                  />
+              {activeLayer && (activeLayer.placement ?? "body") === "body" ? (
+                <div onPointerDown={onArtworkPointerDown} className="absolute cursor-grab touch-none select-none active:cursor-grabbing">
+                  <ArtworkLayerPreview layer={activeLayer} draggable />
                 </div>
-              ) : (
+              ) : !activeLayer ? (
                 <span className="rotate-90 whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.2em] text-ivory/50">
                   Saree body — {material.name}
                 </span>
-              )}
+              ) : null}
             </div>
             {/* Border strip */}
             <div
-              className="flex items-center justify-center border-t"
+              className="relative flex items-center justify-center border-t"
               style={{
                 backgroundColor: design.paletteHexBySlot.border,
                 height: `${border.widthCm * 4}px`,
@@ -511,10 +644,15 @@ export function StudioShell() {
               <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-charcoal/70">
                 {border.name}
               </span>
+              {activeLayer && (activeLayer.placement ?? "body") === "border" && (
+                <ArtworkLayerPreview layer={activeLayer} />
+              )}
             </div>
           </div>
+          {/* Guardrail 1 (PRD §73): never call this a "final saree preview" —
+              always "Digital textile concept preview." */}
           <p className="mt-6 max-w-xs px-4 text-center font-mono text-[10px] uppercase tracking-[0.15em] text-stone">
-            Technical preview · Digital concept — not a guaranteed physical result
+            Digital textile concept preview — not a guaranteed physical result
           </p>
         </div>
 
@@ -532,6 +670,7 @@ export function StudioShell() {
             setScale={setScale}
             setRotation={setRotation}
             material={material}
+            weave={weave}
             border={border}
             zari={zari}
             checks={checks}
@@ -539,6 +678,8 @@ export function StudioShell() {
             price={price}
             versions={versions}
             onRestoreVersion={handleRestoreVersion}
+            compareIds={compareIds}
+            setCompareIds={setCompareIds}
           />
         </aside>
       </div>
@@ -570,6 +711,7 @@ export function StudioShell() {
             setScale={setScale}
             setRotation={setRotation}
             material={material}
+            weave={weave}
             border={border}
             zari={zari}
             checks={checks}
@@ -577,6 +719,8 @@ export function StudioShell() {
             price={price}
             versions={versions}
             onRestoreVersion={handleRestoreVersion}
+            compareIds={compareIds}
+            setCompareIds={setCompareIds}
           />
         </div>
       )}
@@ -613,6 +757,7 @@ function StudioPropertiesPanel({
   setScale,
   setRotation,
   material,
+  weave,
   border,
   zari,
   checks,
@@ -620,6 +765,8 @@ function StudioPropertiesPanel({
   price,
   versions,
   onRestoreVersion,
+  compareIds,
+  setCompareIds,
 }: {
   activeStep: StudioStep;
   design: SareeDesign;
@@ -632,6 +779,7 @@ function StudioPropertiesPanel({
   setScale: (scale: number) => void;
   setRotation: (rotation: number) => void;
   material: (typeof materials)[number];
+  weave: (typeof weaves)[number];
   border: (typeof borders)[number];
   zari: (typeof zariOptions)[number];
   checks: ManufacturabilityCheck[];
@@ -639,7 +787,21 @@ function StudioPropertiesPanel({
   price: PriceResult;
   versions: DesignVersion[];
   onRestoreVersion: (v: DesignVersion) => void;
+  compareIds: [string, string] | null;
+  setCompareIds: (ids: [string, string] | null) => void;
 }) {
+  function toggleCompare(id: string) {
+    if (!compareIds) {
+      setCompareIds([id, id]);
+      return;
+    }
+    const [first] = compareIds;
+    if (first === id) {
+      setCompareIds(null);
+      return;
+    }
+    setCompareIds([first, id]);
+  }
   return (
     <>
       <div className="border-b border-line-dark p-5">
@@ -665,12 +827,34 @@ function StudioPropertiesPanel({
                 </span>
               </button>
             ))}
+
+            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.2em] text-stone">
+              Weave
+            </p>
+            <div className="flex flex-col gap-2">
+              {weavesForMaterial(design.materialId).map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => dispatch({ type: "SET_WEAVE", weaveId: w.id })}
+                  className={`border px-4 py-3 text-left transition-colors ${
+                    w.id === design.weaveId
+                      ? "border-brass-bright bg-charcoal-soft"
+                      : "border-line-dark hover:border-stone"
+                  }`}
+                >
+                  <span className="block font-display text-base">{w.name}</span>
+                  <span className="mt-1 block font-mono text-[10px] leading-relaxed text-stone">
+                    {w.description}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
         {activeStep === "colour" && (
           <div className="mt-4 flex flex-col gap-3">
-            {(["base", "border", "pallu", "accent"] as const).map((slot) => (
+            {(["base", "motif", "border", "pallu", "accent", "blouse"] as const).map((slot) => (
               <label
                 key={slot}
                 className="flex items-center justify-between border border-line-dark px-4 py-3"
@@ -810,6 +994,28 @@ function StudioPropertiesPanel({
 
             {activeLayer && (
               <div className="flex flex-col gap-4 border-t border-line-dark pt-4">
+                <div>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-stone">
+                    Place on
+                  </span>
+                  <div className="mt-2 flex gap-2">
+                    {(["body", "border", "pallu"] as const).map((region) => (
+                      <button
+                        key={region}
+                        onClick={() =>
+                          dispatch({ type: "ARTWORK_SET_PLACEMENT", layerId: activeLayer.id, placement: region })
+                        }
+                        className={`flex-1 border py-1.5 font-mono text-[10px] capitalize ${
+                          (activeLayer.placement ?? "body") === region
+                            ? "border-brass-bright text-brass-bright"
+                            : "border-line-dark text-stone-light"
+                        }`}
+                      >
+                        {region}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div>
                   <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-stone">
                     Scale — {Math.round(activeLayer.transform.scale * 100)}%
@@ -953,6 +1159,7 @@ function StudioPropertiesPanel({
         <dl className="mt-4 flex flex-col gap-2 font-mono text-[11px]">
           {[
             ["Material", material.name],
+            ["Weave", weave.name],
             ["Width", material.width],
             ["Weight", material.weight],
             ["Repeat", `${design.repeat.widthCm} × ${design.repeat.heightCm} cm, ${design.repeat.type}`],
@@ -1018,24 +1225,114 @@ function StudioPropertiesPanel({
       {/* Version history */}
       {versions.length > 0 && (
         <div className="p-5">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-stone">
-            Version history
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-stone">
+              Version history
+            </p>
+            {compareIds && (
+              <button
+                onClick={() => setCompareIds(null)}
+                className="font-mono text-[9px] uppercase tracking-[0.1em] text-stone hover:text-brass"
+              >
+                Clear compare
+              </button>
+            )}
+          </div>
           <ul className="mt-4 flex flex-col gap-2">
             {[...versions].reverse().map((v) => (
               <li key={v.id} className="flex items-center justify-between gap-2 text-xs">
                 <span className="truncate text-stone-light">{v.label}</span>
-                <button
-                  onClick={() => onRestoreVersion(v)}
-                  className="shrink-0 border border-line-dark px-2 py-1 font-mono text-[9px] uppercase tracking-[0.1em] text-stone hover:border-brass hover:text-brass"
-                >
-                  Restore
-                </button>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    onClick={() => toggleCompare(v.id)}
+                    className={`border px-2 py-1 font-mono text-[9px] uppercase tracking-[0.1em] ${
+                      compareIds?.includes(v.id)
+                        ? "border-brass-bright text-brass-bright"
+                        : "border-line-dark text-stone hover:border-brass hover:text-brass"
+                    }`}
+                  >
+                    Compare
+                  </button>
+                  <button
+                    onClick={() => onRestoreVersion(v)}
+                    className="border border-line-dark px-2 py-1 font-mono text-[9px] uppercase tracking-[0.1em] text-stone hover:border-brass hover:text-brass"
+                  >
+                    Restore
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
+
+          {compareIds && compareIds[0] !== compareIds[1] && (
+            <VersionCompareTable
+              versions={versions}
+              ids={compareIds}
+              onRestore={onRestoreVersion}
+            />
+          )}
         </div>
       )}
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+function VersionCompareTable({
+  versions,
+  ids,
+  onRestore,
+}: {
+  versions: DesignVersion[];
+  ids: [string, string];
+  onRestore: (v: DesignVersion) => void;
+}) {
+  const a = versions.find((v) => v.id === ids[0]);
+  const b = versions.find((v) => v.id === ids[1]);
+  if (!a || !b) return null;
+
+  const rows = diffDesigns(a.design, b.design);
+
+  return (
+    <div className="mt-4 border border-line-dark">
+      <div className="grid grid-cols-[1fr_1fr_1fr] gap-2 border-b border-line-dark bg-charcoal-soft px-3 py-2 font-mono text-[9px] uppercase tracking-[0.1em] text-stone">
+        <span>Field</span>
+        <span className="truncate text-stone-light" title={a.label}>
+          {a.label}
+        </span>
+        <span className="truncate text-stone-light" title={b.label}>
+          {b.label}
+        </span>
+      </div>
+      <ul>
+        {rows.map((r) => (
+          <li
+            key={r.label}
+            className={`grid grid-cols-[1fr_1fr_1fr] gap-2 border-b border-line-dark px-3 py-2 font-mono text-[10px] last:border-b-0 ${
+              r.changed ? "bg-brass/10" : ""
+            }`}
+          >
+            <span className="text-stone">{r.label}</span>
+            <span className={r.changed ? "text-brass-bright" : "text-stone-light"}>{r.a}</span>
+            <span className={r.changed ? "text-brass-bright" : "text-stone-light"}>{r.b}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="flex justify-end gap-2 p-2">
+        <button
+          onClick={() => onRestore(a)}
+          className="border border-line-dark px-2 py-1 font-mono text-[9px] uppercase tracking-[0.1em] text-stone hover:border-brass hover:text-brass"
+        >
+          Restore {a.label.split(" — ")[0]}
+        </button>
+        <button
+          onClick={() => onRestore(b)}
+          className="border border-line-dark px-2 py-1 font-mono text-[9px] uppercase tracking-[0.1em] text-stone hover:border-brass hover:text-brass"
+        >
+          Restore {b.label.split(" — ")[0]}
+        </button>
+      </div>
+    </div>
   );
 }
