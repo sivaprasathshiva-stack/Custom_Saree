@@ -8,9 +8,9 @@ export const metadata: Metadata = { title: "Sign in — VELVOREA" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; reason?: string }>;
 }) {
-  const { next } = await searchParams;
+  const { next, reason } = await searchParams;
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-6 py-24">
       <BackButton className="mb-8 self-start" fallbackHref="/" />
@@ -18,6 +18,11 @@ export default async function LoginPage({
       <p className="mt-2 text-sm text-gray">
         Access your saved designs, quotes and orders.
       </p>
+      {reason === "idle" && (
+        <p className="mt-4 border border-line bg-ivory-deep px-4 py-3 text-sm text-stone">
+          You were signed out after 10 minutes of inactivity. Your saved designs are safe.
+        </p>
+      )}
       <AuthForm mode="sign-in" redirectTo={next ?? "/account"} />
       <div className="mt-4 flex items-center justify-between text-sm">
         <Link href="/auth/forgot-password" className="text-gray underline underline-offset-4 hover:text-ink">

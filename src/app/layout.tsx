@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { SiteLoader } from "@/components/layout/site-loader";
 import { WebVitalsReporter } from "@/components/web-vitals-reporter";
+import { IdleLogout } from "@/components/auth/idle-logout";
 
 const display = Archivo({
   variable: "--font-display",
@@ -25,7 +26,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VELVOREA — Custom Silk Saree Manufacturing",
+  title: "VELVOREA — Weave your idea",
   description:
     "A digital studio for creating bespoke silk sarees, from material and colour to motif, border and pallu — physically manufactured to your specification.",
 };
@@ -42,6 +43,7 @@ export default function RootLayout({
       >
         <SiteLoader />
         <WebVitalsReporter />
+        <IdleLogout />
         {children}
         <Analytics />
         <SpeedInsights />

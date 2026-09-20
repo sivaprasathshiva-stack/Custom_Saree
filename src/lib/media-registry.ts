@@ -95,6 +95,18 @@ export const mediaRegistry: MediaAsset[] = [
     height: 1448,
   },
   {
+    id: "homepage.material-is-the-product",
+    type: "image",
+    category: "editorial",
+    status: "owned",
+    title: "The Material Is the Product",
+    src: "/assets/homepage/material-is-the-product.png",
+    alt: "Silk thread and material detail",
+    usage: "editorial",
+    width: 1536,
+    height: 1024,
+  },
+  {
     id: "homepage.studio.preview-saree",
     type: "image",
     category: "sarees",

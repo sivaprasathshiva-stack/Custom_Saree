@@ -78,8 +78,7 @@ export default function Home() {
         })()}
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/40 to-transparent" />
         <div className="relative z-10 mx-auto w-full max-w-[1600px] px-6 pb-20 md:px-10">
-          <p className="text-sm text-gray-light">Custom silk manufacturing</p>
-          <h1 className="mt-6 max-w-4xl font-display text-5xl leading-[1.05] md:text-7xl">
+          <h1 className="max-w-4xl font-display text-5xl leading-[1.05] md:text-7xl">
             Design silk.
             <br />
             <span className="text-gray-light">Weave your idea.</span>
@@ -99,11 +98,29 @@ export default function Home() {
 
       {/* 02 — Textile statement */}
       <section className="mx-auto max-w-[1600px] px-6 py-28 md:px-10">
-        <SectionLabel>The Material Is the Product</SectionLabel>
-        <p className="mt-8 max-w-3xl font-display text-3xl leading-snug text-charcoal md:text-5xl">
-          Every thread can be designed — silk, zari, weave, colour and motif, engineered
-          together before a single yarn is dyed.
-        </p>
+        <div className="grid grid-cols-1 items-center gap-12 md:grid-cols-2">
+          <div>
+            <SectionLabel>The Material Is the Product</SectionLabel>
+            <p className="mt-8 max-w-xl font-display text-3xl leading-snug text-charcoal md:text-5xl">
+              Every thread can be designed — silk, zari, weave, colour and motif,
+              engineered together before a single yarn is dyed.
+            </p>
+          </div>
+          {(() => {
+            const media = getMedia("homepage.material-is-the-product");
+            return media?.src ? (
+              <div className="relative aspect-[3/2] w-full overflow-hidden">
+                <Image
+                  src={media.src}
+                  alt={media.alt}
+                  fill
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                  className="object-cover"
+                />
+              </div>
+            ) : null;
+          })()}
+        </div>
       </section>
 
       {/* 03 — Material intelligence */}
