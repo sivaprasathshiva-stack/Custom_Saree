@@ -11,14 +11,24 @@ export function BackButton({
   fallbackHref = "/",
   label = "Back",
   className = "",
+  forceHref,
 }: {
   fallbackHref?: string;
   label?: string;
   className?: string;
+  /** When set, always navigates here instead of browser history-back — for
+   * places where the natural parent route matters more than wherever the
+   * user happened to come from (e.g. the Studio editor always returning to
+   * My Designs). */
+  forceHref?: string;
 }) {
   const router = useRouter();
 
   function handleClick() {
+    if (forceHref) {
+      router.push(forceHref);
+      return;
+    }
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
     } else {

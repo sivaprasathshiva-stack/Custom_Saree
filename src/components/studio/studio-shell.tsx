@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StatusBadge } from "@/components/ui/section-label";
+import { BackButton } from "@/components/ui/back-button";
 import {
   StudioStep,
   steps,
@@ -17,7 +18,12 @@ import {
 } from "./studio-data";
 import { createDefaultDesign } from "./design-reducer";
 import { useDesignHistory } from "./use-design-history";
-import { computePrice } from "./pricing-engine";
+// NOTE: pricing-engine.ts is intentionally not imported/rendered here.
+// Per the PRD, Studio never shows a live estimated cost during editing (or
+// on the Concept Review screen) — the estimate logic is a demo/internal
+// tool, kept in the codebase for possible future admin use, but must not
+// set customer price expectations before a design is reviewed by the
+// textile team. See pricing-engine.ts's own header comment.
 import { checkManufacturability, overallStatus } from "./manufacturability-engine";
 import {
   loadCurrentDesign,
@@ -33,16 +39,10 @@ import {
   saveVersionCloud,
   getOrCreateDesignId,
 } from "./cloud-design-store";
-import type { ArtworkLayer, DesignVersion, SareeDesign, ManufacturabilityCheck, PriceResult } from "./types";
+import type { ArtworkLayer, DesignVersion, SareeDesign, ManufacturabilityCheck } from "./types";
 import type { DesignAction } from "./design-reducer";
 import { diffDesigns } from "./design-diff";
 import type { User } from "@supabase/supabase-js";
-
-const inr = new Intl.NumberFormat("en-IN", {
-  style: "currency",
-  currency: "INR",
-  maximumFractionDigits: 0,
-});
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/svg+xml"];
@@ -180,6 +180,24 @@ export function StudioShell() {
       if (materialId && materials.some((m) => m.id === materialId)) {
         const base = createDefaultDesign();
         reset({ ...base, materialId });
+        hasLoadedRef.current = true;
+        return;
+      }
+
+      // Nothing saved anywhere (no cloud design, no local draft) and no
+      // preset/material handoff from a marketing page — this is a genuinely
+      // fresh signed-in visit to /studio with nothing chosen yet. Rather
+      // than silently rendering a hard-coded default saree (materials[0]
+      // etc. from createDefaultDesign()) as if the customer had picked it,
+      // send them to the real "Choose a saree base" entry point (PRD's
+      // Create Design flow) so the first material they see in the editor is
+      // one they actually selected. Only signed-in users reach this branch
+      // (StudioShell only mounts post sign-in when Supabase is configured;
+      // in the unconfigured/local-demo fallback there is no per-user cloud
+      // state to check, so the default design is kept as a working demo).
+      if (currentUser) {
+        router.replace("/studio/new");
+        return;
       }
       hasLoadedRef.current = true;
     }
@@ -188,7 +206,7 @@ export function StudioShell() {
     return () => {
       cancelled = true;
     };
-  }, [reset]);
+  }, [reset, router]);
 
   // "Saved Ns ago" ticker.
   useEffect(() => {
@@ -265,7 +283,7 @@ export function StudioShell() {
   // -in user because submissions are tied to a real designs.id row —
   // matches how version history already behaves (getOrCreateDesignId).
   const handleCompleteDesign = useCallback(async () => {
-    handleSave();
+    await handleSave();
     if (!user) {
       router.push("/studio");
       return;
@@ -415,13 +433,17 @@ export function StudioShell() {
     commitTransformCheckpoint();
   };
 
-  const material = materials.find((m) => m.id === design.materialId)!;
+  // Defensive fallbacks (not `!` non-null assertions): a design loaded from
+  // the cloud can carry an id that no longer matches the current catalog
+  // (e.g. an older design saved before a catalog entry was renamed/removed)
+  // — falling back to the first catalog entry avoids a hard render crash in
+  // that case rather than throwing "Cannot read properties of undefined".
+  const material = materials.find((m) => m.id === design.materialId) ?? materials[0];
   const weave = weaves.find((w) => w.id === design.weaveId) ?? weaves[0];
-  const border = borders.find((b) => b.id === design.borderId)!;
-  const pallu = pallus.find((p) => p.id === design.palluId)!;
-  const zari = zariOptions.find((z) => z.id === design.zariId)!;
+  const border = borders.find((b) => b.id === design.borderId) ?? borders[0];
+  const pallu = pallus.find((p) => p.id === design.palluId) ?? pallus[0];
+  const zari = zariOptions.find((z) => z.id === design.zariId) ?? zariOptions[0];
 
-  const price = useMemo(() => computePrice(design), [design]);
   const checks = useMemo(() => checkManufacturability(design), [design]);
   const status = overallStatus(checks);
 
@@ -438,6 +460,12 @@ export function StudioShell() {
       {/* Top bar */}
       <div className="flex h-16 shrink-0 items-center justify-between border-b border-line-dark px-4 md:px-6">
         <div className="flex items-center gap-4 md:gap-6">
+          <BackButton
+            forceHref="/studio/designs"
+            label="My Designs"
+            className="text-stone-light hover:text-brass-bright"
+          />
+          <span className="hidden h-4 w-px bg-line-dark md:block" />
           <div className="flex items-center gap-2">
             <Image
               src="/assets/brand/velvorea/velvorea-logo-white.png"
@@ -675,7 +703,6 @@ export function StudioShell() {
             zari={zari}
             checks={checks}
             status={status}
-            price={price}
             versions={versions}
             onRestoreVersion={handleRestoreVersion}
             compareIds={compareIds}
@@ -716,7 +743,6 @@ export function StudioShell() {
             zari={zari}
             checks={checks}
             status={status}
-            price={price}
             versions={versions}
             onRestoreVersion={handleRestoreVersion}
             compareIds={compareIds}
@@ -736,7 +762,6 @@ export function StudioShell() {
         />
         <div className="hidden items-center gap-6 md:flex">
           <span>Repeat: {design.repeat.type}</span>
-          <span>{inr.format(price.total)}</span>
         </div>
       </div>
     </div>
@@ -762,7 +787,6 @@ function StudioPropertiesPanel({
   zari,
   checks,
   status,
-  price,
   versions,
   onRestoreVersion,
   compareIds,
@@ -784,7 +808,6 @@ function StudioPropertiesPanel({
   zari: (typeof zariOptions)[number];
   checks: ManufacturabilityCheck[];
   status: "ready" | "review" | "blocked";
-  price: PriceResult;
   versions: DesignVersion[];
   onRestoreVersion: (v: DesignVersion) => void;
   compareIds: [string, string] | null;
@@ -908,12 +931,32 @@ function StudioPropertiesPanel({
                   setDragActive(false);
                   handleFiles(e.dataTransfer.files);
                 }}
-                className={`flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed px-4 py-10 text-center transition-colors ${
-                  dragActive ? "border-brass-bright bg-charcoal-soft" : "border-line-dark"
+                className={`flex cursor-pointer flex-col items-center justify-center gap-3 border-2 border-dashed px-4 py-10 text-center transition-colors ${
+                  dragActive ? "border-brass-bright bg-charcoal-soft" : "border-brass/60 hover:border-brass-bright hover:bg-charcoal-soft"
                 }`}
               >
-                <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-stone">
-                  Drop artwork or click to upload
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M12 16V4m0 0L7 9m5-5l5 5M5 20h14"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-brass-bright"
+                  />
+                </svg>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="bg-brass-bright px-5 py-2.5 font-mono text-[11px] font-semibold uppercase tracking-[0.15em] text-charcoal hover:bg-ivory"
+                >
+                  Upload Image
+                </button>
+                <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-stone-light">
+                  or drop artwork here
                 </span>
                 <span className="font-mono text-[9px] text-stone">PNG · JPG · SVG, up to 8 MB</span>
               </div>
@@ -1200,27 +1243,8 @@ function StudioPropertiesPanel({
         </ul>
       </div>
 
-      {/* Price */}
-      <div className="border-b border-line-dark p-5">
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-stone">
-          Estimated price (demo)
-        </p>
-        <dl className="mt-4 flex flex-col gap-2 font-mono text-[11px]">
-          {price.lines.map((l) => (
-            <div key={l.label} className="flex items-center justify-between">
-              <dt className="text-stone">{l.label}</dt>
-              <dd>{inr.format(l.amount)}</dd>
-            </div>
-          ))}
-        </dl>
-        <div className="mt-4 flex items-center justify-between border-t border-line-dark pt-3 font-mono text-sm">
-          <span>Estimated total</span>
-          <span className="text-brass-bright">{inr.format(price.total)}</span>
-        </div>
-        <p className="mt-2 font-mono text-[10px] text-stone">
-          Estimated production: {price.leadTimeDaysMin}–{price.leadTimeDaysMax} days
-        </p>
-      </div>
+      {/* Live pricing is intentionally not shown here — see the note above
+          the pricing-engine import in this file. */}
 
       {/* Version history */}
       {versions.length > 0 && (

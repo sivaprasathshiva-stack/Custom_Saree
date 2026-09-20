@@ -21,7 +21,7 @@ export function SiteLoader() {
   const isStudio = pathname?.startsWith("/studio") ?? false;
 
   const sessionKey = isStudio ? "velvorea:studio-loaded" : "velvorea:loaded";
-  const minVisibleMs = isStudio ? 10000 : 2500;
+  const minVisibleMs = isStudio ? 5000 : 2500;
 
   const [visible, setVisible] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -49,14 +49,17 @@ export function SiteLoader() {
     document.documentElement.style.overflow = "hidden";
 
     let raf: number;
-    let done = false;
+    let hidden = false;
+    let realLoadDone = document.readyState === "complete";
 
-    function finish() {
-      if (done) return;
-      done = true;
+    function onRealLoad() {
+      realLoadDone = true;
+    }
+
+    function hide() {
+      if (hidden) return;
+      hidden = true;
       setProgress(100);
-      const elapsed = Date.now() - mountedAt;
-      const holdMs = Math.max(0, effectiveMinMs - elapsed);
       window.setTimeout(() => {
         setVisible(false);
         document.documentElement.style.overflow = "";
@@ -65,28 +68,37 @@ export function SiteLoader() {
         } catch {
           // ignore
         }
-      }, holdMs);
+        // Slight delay after hiding starts (opacity transition) before we
+        // stop ticking, so the bar doesn't visibly snap.
+      }, 0);
     }
 
+    // The bar's percentage is tied directly to elapsed wall-clock time
+    // against effectiveMinMs — it genuinely animates 0% -> 100% over that
+    // window, rather than jumping straight to 100% and then sitting there
+    // looking "done" while nothing happens. It only actually dismisses once
+    // BOTH that time has elapsed AND the real `load` event has fired (if
+    // `load` is slower than effectiveMinMs, progress holds just under 100%
+    // until it fires, then completes).
     const tick = () => {
       const elapsed = Date.now() - mountedAt;
-      // Ramp so the bar reaches ~90% right around the minimum hold time,
-      // then creeps the rest of the way while waiting on real `load`.
-      const rampTarget = Math.min(90, (elapsed / effectiveMinMs) * 90);
-      setProgress((p) => (p >= rampTarget ? p : rampTarget));
+      const timeRatio = Math.min(1, elapsed / effectiveMinMs);
+      const target = realLoadDone ? timeRatio * 100 : Math.min(99, timeRatio * 100);
+      setProgress((p) => (p >= target ? p : target));
+
+      if (realLoadDone && timeRatio >= 1) {
+        hide();
+        return;
+      }
       raf = window.requestAnimationFrame(tick);
     };
     raf = window.requestAnimationFrame(tick);
 
-    if (document.readyState === "complete") {
-      finish();
-    } else {
-      window.addEventListener("load", finish, { once: true });
-    }
+    window.addEventListener("load", onRealLoad, { once: true });
 
     return () => {
       if (raf) window.cancelAnimationFrame(raf);
-      window.removeEventListener("load", finish);
+      window.removeEventListener("load", onRealLoad);
     };
   }, [sessionKey, minVisibleMs]);
 

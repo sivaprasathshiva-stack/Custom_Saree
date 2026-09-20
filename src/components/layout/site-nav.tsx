@@ -16,8 +16,9 @@ const links = [
   { label: "About", href: "/about" },
 ];
 
-export function SiteNav() {
+export function SiteNav({ accountLabel }: { accountLabel?: string | null }) {
   const [open, setOpen] = useState(false);
+  const label = accountLabel || "Account";
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-ivory/90 backdrop-blur">
@@ -55,9 +56,9 @@ export function SiteNav() {
           </button>
           <Link
             href="/account"
-            className="text-sm text-charcoal/80 hover:text-charcoal"
+            className="max-w-[10rem] truncate text-sm text-charcoal/80 hover:text-charcoal"
           >
-            Account
+            {label}
           </Link>
           <Button href="/studio" variant="primary">
             Create your saree

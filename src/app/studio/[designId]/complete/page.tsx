@@ -34,18 +34,33 @@ export default async function CompleteDesignPage({
     .from("designs")
     .select("id, name, design, updated_at")
     .eq("id", designId)
+    .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!row) notFound();
+  if (!row || !row.design) notFound();
 
-  const design = fromPersisted(row.design) as SareeDesign;
+  // Defensive: a row from an older schema shape, or one written mid-migration,
+  // could fail to parse — this should show the honest "something went wrong"
+  // error boundary (src/app/studio/error.tsx) rather than crash with a raw
+  // stack trace, and should never happen for a design created by the current
+  // app, but we don't assume that.
+  let design: SareeDesign;
+  try {
+    design = fromPersisted(row.design) as SareeDesign;
+  } catch {
+    throw new Error("This design could not be loaded — its saved data is in an unexpected format.");
+  }
+  if (!design || typeof design !== "object" || !design.materialId) {
+    throw new Error("This design could not be loaded — its saved data is incomplete.");
+  }
+
   const conceptId = row.id.slice(0, 8).toUpperCase();
   const timestamp = new Date(row.updated_at).toLocaleString("en-IN");
 
   return (
     <main className="mx-auto min-h-screen max-w-2xl px-6 py-16 text-ivory">
       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-stone">Concept Review</p>
-      <h1 className="mt-2 font-serif text-3xl">{design.name}</h1>
+      <h1 className="mt-2 font-serif text-3xl">{design.name || row.name}</h1>
       <p className="mt-3 max-w-lg text-sm text-stone-light">
         This is your digital textile concept preview — not a guaranteed physical result. Our textile
         design team will refine and validate your concept for weaving after submission.
