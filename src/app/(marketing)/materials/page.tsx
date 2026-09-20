@@ -1,8 +1,10 @@
+import Image from "next/image";
 import { SectionLabel } from "@/components/ui/section-label";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/ui/back-button";
 import { materials } from "@/components/studio/studio-data";
+import { getMedia, MATERIAL_MEDIA_ID } from "@/lib/media-registry";
 
 export const metadata = { title: "Silk Library — VELVOREA" };
 
@@ -21,9 +23,23 @@ export default function MaterialsPage() {
 
       <section className="mx-auto max-w-[1600px] px-6 py-16 md:px-10">
         <div className="grid grid-cols-1 gap-px border border-line bg-line md:grid-cols-2">
-          {materials.map((m) => (
+          {materials.map((m) => {
+            const media = getMedia(MATERIAL_MEDIA_ID[m.id]);
+            return (
             <div key={m.id} className="grid grid-cols-1 bg-ivory sm:grid-cols-2">
-              <MediaPlaceholder label={m.name} ratio="aspect-square" />
+              {media?.src ? (
+                <div className="relative aspect-square w-full overflow-hidden">
+                  <Image
+                    src={media.src}
+                    alt={media.alt}
+                    fill
+                    sizes="(min-width: 640px) 50vw, 100vw"
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <MediaPlaceholder label={m.name} ratio="aspect-square" />
+              )}
               <div className="flex flex-col justify-between p-8">
                 <div>
                   <p className="font-display text-2xl">{m.name}</p>
@@ -51,7 +67,8 @@ export default function MaterialsPage() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
     </div>

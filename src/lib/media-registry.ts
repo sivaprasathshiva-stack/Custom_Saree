@@ -253,6 +253,15 @@ mediaRegistry.push(
   }
 );
 
+/** Maps studio-data material ids to their media-registry entries — keeps the
+ * image mapping in one place rather than duplicating filenames per page. */
+export const MATERIAL_MEDIA_ID: Record<string, string> = {
+  kan: "homepage.material.kanchipuram",
+  ban: "homepage.material.banarasi",
+  tus: "homepage.material.tussar",
+  mys: "homepage.material.mysore",
+};
+
 export function getMedia(id: string): MediaAsset | undefined {
   return mediaRegistry.find((m) => m.id === id);
 }

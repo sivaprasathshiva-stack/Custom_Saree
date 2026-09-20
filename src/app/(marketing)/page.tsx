@@ -5,16 +5,7 @@ import { SectionLabel } from "@/components/ui/section-label";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { ArchiveGrid } from "@/components/marketing/archive-grid";
 import { materials, palette, borders } from "@/components/studio/studio-data";
-import { getMedia } from "@/lib/media-registry";
-
-// Maps studio-data material ids to their homepage media-registry entries —
-// keeps the image mapping in one place rather than duplicating filenames.
-const MATERIAL_MEDIA_ID: Record<string, string> = {
-  kan: "homepage.material.kanchipuram",
-  ban: "homepage.material.banarasi",
-  tus: "homepage.material.tussar",
-  mys: "homepage.material.mysore",
-};
+import { getMedia, MATERIAL_MEDIA_ID } from "@/lib/media-registry";
 
 const process = [
   {
