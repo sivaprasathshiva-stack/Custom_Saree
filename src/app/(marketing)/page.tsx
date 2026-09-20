@@ -55,13 +55,28 @@ export default function Home() {
     <div className="bg-ivory">
       {/* 01 — Cinematic opening */}
       <section className="relative flex min-h-[92vh] flex-col justify-end overflow-hidden bg-charcoal text-ivory">
-        <MediaPlaceholder
-          label="Homepage Hero — Loom in Motion"
-          hint="Recommended: 3840×2160 · MP4, muted loop"
-          ratio="absolute inset-0 aspect-auto h-full"
-          dark
-          className="!border-0"
-        />
+        {(() => {
+          const hero = getMedia("home-hero-loom");
+          return hero?.src ? (
+            <Image
+              src={hero.src}
+              alt={hero.alt}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+            />
+          ) : (
+            <MediaPlaceholder
+              label="Homepage Hero — Loom in Motion"
+              hint="Recommended: 3840×2160 · MP4, muted loop"
+              ratio="absolute inset-0 aspect-auto h-full"
+              dark
+              className="!border-0"
+            />
+          );
+        })()}
+        <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/40 to-transparent" />
         <div className="relative z-10 mx-auto w-full max-w-[1600px] px-6 pb-20 md:px-10">
           <p className="text-sm text-gray-light">Custom silk manufacturing</p>
           <h1 className="mt-6 max-w-4xl font-display text-5xl leading-[1.05] md:text-7xl">
@@ -189,39 +204,53 @@ export default function Home() {
             </h2>
             <p className="mt-6 max-w-md text-stone-light/85">
               Choose silk and weave, build a palette, upload artwork, configure repeat,
-              border, pallu and zari — with live manufacturability and price feedback at
-              every step.
+              border, pallu and zari — with live manufacturability feedback at every step.
             </p>
             <div className="mt-9">
               <Button href="/studio" variant="dark">Enter the Textile Studio</Button>
             </div>
           </div>
-          <div className="flex aspect-[4/3] items-center justify-center border border-line-dark bg-charcoal-soft p-10">
-            <div className="flex h-full w-[38%] flex-col border border-line-dark">
-              <div
-                className="flex h-1/4 items-center justify-center border-b text-[9px] text-ivory/60"
-                style={{ backgroundColor: palette[0].hex, borderColor: palette[1].hex }}
-              >
-                Pallu
+          {(() => {
+            const preview = getMedia("homepage.studio.preview-saree");
+            return preview?.src ? (
+              <div className="relative aspect-[4/3] w-full overflow-hidden border border-line-dark">
+                <Image
+                  src={preview.src}
+                  alt={preview.alt}
+                  fill
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                  className="object-cover"
+                />
               </div>
-              <div
-                className="flex flex-1 items-center justify-center text-[9px] text-ivory/40"
-                style={{
-                  backgroundColor: palette[0].hex,
-                  backgroundImage:
-                    "repeating-linear-gradient(45deg, rgba(246,242,234,0.06) 0, rgba(246,242,234,0.06) 2px, transparent 2px, transparent 12px)",
-                }}
-              >
-                {materials[0].name}
+            ) : (
+              <div className="flex aspect-[4/3] items-center justify-center border border-line-dark bg-charcoal-soft p-10">
+                <div className="flex h-full w-[38%] flex-col border border-line-dark">
+                  <div
+                    className="flex h-1/4 items-center justify-center border-b text-[9px] text-ivory/60"
+                    style={{ backgroundColor: palette[0].hex, borderColor: palette[1].hex }}
+                  >
+                    Pallu
+                  </div>
+                  <div
+                    className="flex flex-1 items-center justify-center text-[9px] text-ivory/40"
+                    style={{
+                      backgroundColor: palette[0].hex,
+                      backgroundImage:
+                        "repeating-linear-gradient(45deg, rgba(246,242,234,0.06) 0, rgba(246,242,234,0.06) 2px, transparent 2px, transparent 12px)",
+                    }}
+                  >
+                    {materials[0].name}
+                  </div>
+                  <div
+                    className="flex h-8 items-center justify-center text-[9px] text-charcoal/70"
+                    style={{ backgroundColor: palette[1].hex }}
+                  >
+                    {borders[0].name}
+                  </div>
+                </div>
               </div>
-              <div
-                className="flex h-8 items-center justify-center text-[9px] text-charcoal/70"
-                style={{ backgroundColor: palette[1].hex }}
-              >
-                {borders[0].name}
-              </div>
-            </div>
-          </div>
+            );
+          })()}
         </div>
       </section>
 
@@ -229,11 +258,26 @@ export default function Home() {
       <section className="mx-auto max-w-[1600px] px-6 py-28 md:px-10">
         <SectionLabel>Craftsmanship</SectionLabel>
         <div className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-3">
-          <MediaPlaceholder
-            label="Master Weaver Portrait"
-            ratio="aspect-[3/4]"
-            className="md:col-span-1"
-          />
+          {(() => {
+            const portrait = getMedia("weaver-portrait-01");
+            return portrait?.src ? (
+              <div className="relative aspect-[3/4] w-full overflow-hidden md:col-span-1">
+                <Image
+                  src={portrait.src}
+                  alt={portrait.alt}
+                  fill
+                  sizes="(min-width: 768px) 33vw, 100vw"
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <MediaPlaceholder
+                label="Master Weaver Portrait"
+                ratio="aspect-[3/4]"
+                className="md:col-span-1"
+              />
+            );
+          })()}
           <div className="flex flex-col justify-center gap-6 md:col-span-2">
             <p className="font-display text-3xl leading-snug text-charcoal md:text-4xl">
               Behind every design is a weaver, a loom and a discipline passed
