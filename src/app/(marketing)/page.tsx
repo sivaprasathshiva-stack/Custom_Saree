@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { ArchiveGrid } from "@/components/marketing/archive-grid";
+import { HeroSlider } from "@/components/marketing/hero-slider";
 import { materials, palette, borders } from "@/components/studio/studio-data";
 import { getMedia, MATERIAL_MEDIA_ID } from "@/lib/media-registry";
 
@@ -56,15 +57,14 @@ export default function Home() {
       {/* 01 — Cinematic opening */}
       <section className="relative flex min-h-[92vh] flex-col justify-end overflow-hidden bg-charcoal text-ivory">
         {(() => {
-          const hero = getMedia("home-hero-loom");
-          return hero?.src ? (
-            <Image
-              src={hero.src}
-              alt={hero.alt}
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
+          const heroSlides = [
+            getMedia("home-hero-loom"),
+            getMedia("home-hero-loom-2"),
+            getMedia("home-hero-loom-3"),
+          ].filter((m): m is NonNullable<typeof m> => Boolean(m?.src));
+          return heroSlides.length > 0 ? (
+            <HeroSlider
+              slides={heroSlides.map((m) => ({ src: m.src!, alt: m.alt }))}
             />
           ) : (
             <MediaPlaceholder
