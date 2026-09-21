@@ -2,7 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
-      "comment": "Sweeper only. Vercel Hobby allows one cron run per day, so this is NOT the primary way jobs get processed — see src/lib/jobs/worker.ts. Its job is to catch anything the request-driven path missed: a job whose worker crashed, or one left RETRYING overnight. On a Pro plan, change this to '* * * * *' for near-real-time processing.",
       "path": "/api/studio/worker/tick",
       "schedule": "0 3 * * *"
     }
