@@ -10,6 +10,7 @@
  * best-effort and record the outcome in `notification_events`.
  */
 
+import { OFFICE_EMAIL } from "@/config/contact";
 import { isEnabled } from "@/config/feature-flags";
 import { logger } from "@/lib/observability/logger";
 
@@ -33,7 +34,10 @@ export interface OfficeNotificationResult {
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
 export function officeNotificationRecipient(): string {
-  return process.env.VELVOREA_OFFICE_EMAIL ?? "studio-office@velvorea.example";
+  // Falls back to the published office address rather than a placeholder, so
+  // a deployment that forgets the env var still delivers submissions to a
+  // real inbox instead of silently bouncing them.
+  return process.env.VELVOREA_OFFICE_EMAIL ?? OFFICE_EMAIL;
 }
 
 function fromAddress(): string {
