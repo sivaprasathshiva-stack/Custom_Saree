@@ -127,11 +127,34 @@ export async function hasActiveJob(designId: string, jobType: JobType): Promise<
   return (data?.length ?? 0) > 0;
 }
 
-/** Atomically takes the next job. Returns null when the queue is empty. */
+/**
+ * Atomically takes the next job. Returns null when the queue is empty.
+ *
+ * Calls the three-argument form and falls back to the two-argument one. The
+ * attempt ceiling was added to `claim_generation_job` after this code shipped,
+ * and a deployment whose database has not been migrated yet would otherwise
+ * get PGRST202 on every claim — which does not degrade the queue, it stops it
+ * dead. The fallback keeps jobs flowing across the migration window; the
+ * ceiling simply starts applying once the function is updated.
+ */
 export async function claimNextJob(workerId: string, leaseSeconds = 300): Promise<JobRow | null> {
-  const { data, error } = await admin()
-    .rpc("claim_generation_job", { p_worker_id: workerId, p_lease_seconds: leaseSeconds })
+  const supabase = admin();
+
+  let { data, error } = await supabase
+    .rpc("claim_generation_job", {
+      p_worker_id: workerId,
+      p_lease_seconds: leaseSeconds,
+      p_max_attempts: MAX_GENERATION_ATTEMPTS,
+    })
     .maybeSingle<JobRow>();
+
+  // PGRST202: no function with that signature — an un-migrated database.
+  if (error?.code === "PGRST202") {
+    logger.warn("claim_generation_job is missing the attempt ceiling; run supabase/schema.sql", {});
+    ({ data, error } = await supabase
+      .rpc("claim_generation_job", { p_worker_id: workerId, p_lease_seconds: leaseSeconds })
+      .maybeSingle<JobRow>());
+  }
 
   if (error) {
     logger.error("Job claim failed", { error });

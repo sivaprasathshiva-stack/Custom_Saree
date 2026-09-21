@@ -40,7 +40,10 @@ export default defineConfig({
   // composed), and parallel workers would race the same Supabase rows.
   fullyParallel: false,
   workers: 1,
-  timeout: 120_000,
+  // The journey covers two queued AI jobs end to end. Against a live vision
+  // model a single saree read can exceed a minute on its own, so the cap has
+  // to leave real slack rather than sit just above the happy path.
+  timeout: 300_000,
   expect: { timeout: 20_000 },
   reporter: [["list"]],
   use: {

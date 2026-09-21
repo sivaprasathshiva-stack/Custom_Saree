@@ -339,6 +339,15 @@ export function UploadPanel({
             {analysis?.ready ? "Your saree is ready." : "Understanding your saree…"}
           </h2>
 
+          {/* Reading a saree can take a little while on a busy day, and none
+              of it blocks composing — Smart Arrange simply waits for it. Say
+              so, rather than letting the customer think they must wait. */}
+          {!analysis?.ready && analysis?.status !== "FAILED" && (
+            <p className="mt-2 text-xs text-gray">
+              You can carry on — we&apos;ll finish reading it in the background.
+            </p>
+          )}
+
           <ul className="mt-4 space-y-2">
             {CHECKLIST.map((entry) => {
               const done = analysis?.detected?.[entry.key] ?? false;

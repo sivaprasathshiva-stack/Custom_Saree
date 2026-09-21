@@ -801,7 +801,8 @@ $$;
 -- its job would otherwise sit in RUNNING forever.
 create or replace function public.claim_generation_job(
   p_worker_id text,
-  p_lease_seconds int default 300
+  p_lease_seconds int default 300,
+  p_max_attempts int default 3
 )
 returns public.generation_jobs
 language plpgsql
@@ -810,11 +811,35 @@ as $$
 declare
   claimed public.generation_jobs;
 begin
+  -- A job whose worker died mid-run is reclaimable, but NOT forever. Without
+  -- the attempt ceiling here, a job that reliably kills its worker (a payload
+  -- that times out, an unbounded provider call) is re-claimed every time its
+  -- lease expires, burning provider quota indefinitely and never surfacing as
+  -- failed. Observed in production: a drape job at attempt 5 against a ceiling
+  -- of 3, still RUNNING hours later.
+  update public.generation_jobs
+  set status = 'FAILED',
+      completed_at = now(),
+      locked_at = null,
+      locked_by = null,
+      error_code = coalesce(error_code, 'LEASE_EXPIRED_MAX_ATTEMPTS'),
+      error_message_safe = coalesce(
+        error_message_safe,
+        'We couldn''t finish this one. Your design is safe — please try again.'
+      )
+  where status = 'RUNNING'
+    and locked_at < now() - make_interval(secs => p_lease_seconds)
+    and attempt_count >= p_max_attempts;
+
   select * into claimed
   from public.generation_jobs
   where (
       status in ('QUEUED', 'RETRYING')
-      or (status = 'RUNNING' and locked_at < now() - make_interval(secs => p_lease_seconds))
+      or (
+        status = 'RUNNING'
+        and locked_at < now() - make_interval(secs => p_lease_seconds)
+        and attempt_count < p_max_attempts
+      )
     )
   order by created_at
   for update skip locked

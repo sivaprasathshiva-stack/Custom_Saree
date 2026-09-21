@@ -59,8 +59,14 @@ test("upload, compose, generate, drape, submit", async ({ page }) => {
     buffer: await sareePhotograph(),
   });
 
-  // Analysis is queued on upload and polled by the page (§8.4).
-  await expect(page.getByText(/your saree is ready/i)).toBeVisible({ timeout: 60_000 });
+  // Analysis is queued on upload and polled by the page (§8.4). It is
+  // deliberately NOT awaited here: with a live vision model a read can take
+  // well over a minute, and composing never depends on it — only Smart
+  // Arrange does. Blocking here would assert a requirement the product does
+  // not actually have.
+  await expect(page.getByText(/understanding your saree|your saree is ready/i)).toBeVisible({
+    timeout: 30_000,
+  });
   await expect(page.getByText(/saree detected/i)).toBeVisible();
 
   await page.getByRole("button", { name: /^continue$/i }).click();
@@ -73,6 +79,8 @@ test("upload, compose, generate, drape, submit", async ({ page }) => {
   const generate = page.getByRole("button", { name: /create woven concept/i });
   await expect(generate).toBeDisabled();
 
+  // Smart Arrange is the one control that needs analysis, so it may still be
+  // disabled here — the rest of composing must not be.
   await page.getByRole("button", { name: /add text/i }).click();
 
   // Targeted by id: "Your words" is also the canvas object's accessible name,
