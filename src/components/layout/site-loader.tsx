@@ -5,88 +5,93 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 /**
- * First-landing loader, shown once per browser session per "zone" (main
- * site vs. Studio — Studio gets a longer, separate first-run loader since
- * it's a heavier, more app-like surface). Not shown again on client-side
- * navigation within a zone the session has already seen.
+ * First-landing brand loader for the marketing site.
  *
- * The percentage is not a fake timer dressed up as progress: it ramps
- * toward 90% while waiting, then only reaches 100% once the browser's
- * real `load` event fires — i.e. once every resource on the page
- * (images included) has actually finished loading. A minimum hold time
- * keeps it from flashing by on fast connections.
+ * Deliberately NOT shown in the Studio. The Studio is a tool people open
+ * repeatedly to do work, and it previously sat behind a mandatory five-second
+ * splash on every new session — which is most of what "the studio is slow"
+ * meant. Studio navigations are covered by real route skeletons
+ * (`studio-skeleton.tsx`), which show the actual page furniture instead of
+ * hiding it behind a logo.
+ *
+ * On the marketing site a brief hold is a deliberate brand choice, so it
+ * stays — but it is capped hard: the loader can never outlive
+ * `MAX_VISIBLE_MS`, because it hides page scrolling while it is up and a
+ * `load` event that never fires would otherwise leave the site unusable.
  */
+
+const MIN_VISIBLE_MS = 1200;
+const MAX_VISIBLE_MS = 3000;
+const SESSION_KEY = "velvorea:loaded";
+
 export function SiteLoader() {
   const pathname = usePathname();
-  const isStudio = pathname?.startsWith("/studio") ?? false;
-
-  const sessionKey = isStudio ? "velvorea:studio-loaded" : "velvorea:loaded";
-  const minVisibleMs = isStudio ? 5000 : 2500;
+  // Studio and admin are application surfaces, not a brand moment.
+  const suppressed =
+    (pathname?.startsWith("/studio") ?? false) || (pathname?.startsWith("/admin") ?? false);
 
   const [visible, setVisible] = useState(false);
   const [progress, setProgress] = useState(0);
   const reducedMotion = useRef(false);
 
   useEffect(() => {
+    if (suppressed) return;
+
     let alreadySeen = false;
     try {
-      alreadySeen = window.sessionStorage.getItem(sessionKey) === "1";
+      alreadySeen = window.sessionStorage.getItem(SESSION_KEY) === "1";
     } catch {
       // sessionStorage unavailable (private mode etc.) — treat as not seen.
     }
     if (alreadySeen) return;
 
     reducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const effectiveMinMs = reducedMotion.current ? Math.min(minVisibleMs, 600) : minVisibleMs;
+    const minMs = reducedMotion.current ? 300 : MIN_VISIBLE_MS;
     const mountedAt = Date.now();
 
-    // Intentional: visible must start false on both server and first client
-    // render (sessionStorage/matchMedia aren't available during SSR, and
-    // computing this during render would risk a hydration mismatch), so the
-    // reveal can only happen post-mount, in this effect.
+    // Intentional: `visible` must start false on both server and first client
+    // render (sessionStorage/matchMedia aren't available during SSR), so the
+    // reveal can only happen post-mount, here.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisible(true);
     document.documentElement.style.overflow = "hidden";
 
-    let raf: number;
+    let raf = 0;
     let hidden = false;
     let realLoadDone = document.readyState === "complete";
 
-    function onRealLoad() {
+    const onRealLoad = () => {
       realLoadDone = true;
-    }
+    };
 
-    function hide() {
+    const hide = () => {
       if (hidden) return;
       hidden = true;
       setProgress(100);
-      window.setTimeout(() => {
-        setVisible(false);
-        document.documentElement.style.overflow = "";
-        try {
-          window.sessionStorage.setItem(sessionKey, "1");
-        } catch {
-          // ignore
-        }
-        // Slight delay after hiding starts (opacity transition) before we
-        // stop ticking, so the bar doesn't visibly snap.
-      }, 0);
-    }
+      setVisible(false);
+      document.documentElement.style.overflow = "";
+      try {
+        window.sessionStorage.setItem(SESSION_KEY, "1");
+      } catch {
+        // ignore
+      }
+    };
 
-    // The bar's percentage is tied directly to elapsed wall-clock time
-    // against effectiveMinMs — it genuinely animates 0% -> 100% over that
-    // window, rather than jumping straight to 100% and then sitting there
-    // looking "done" while nothing happens. It only actually dismisses once
-    // BOTH that time has elapsed AND the real `load` event has fired (if
-    // `load` is slower than effectiveMinMs, progress holds just under 100%
-    // until it fires, then completes).
     const tick = () => {
       const elapsed = Date.now() - mountedAt;
-      const timeRatio = Math.min(1, elapsed / effectiveMinMs);
-      const target = realLoadDone ? timeRatio * 100 : Math.min(99, timeRatio * 100);
-      setProgress((p) => (p >= target ? p : target));
 
-      if (realLoadDone && timeRatio >= 1) {
+      // The hard cap. Whatever the page is still waiting on, the visitor gets
+      // their site back.
+      if (elapsed >= MAX_VISIBLE_MS) {
+        hide();
+        return;
+      }
+
+      const ratio = Math.min(1, elapsed / minMs);
+      const target = realLoadDone ? ratio * 100 : Math.min(95, ratio * 100);
+      setProgress((current) => (current >= target ? current : target));
+
+      if (realLoadDone && ratio >= 1) {
         hide();
         return;
       }
@@ -99,8 +104,10 @@ export function SiteLoader() {
     return () => {
       if (raf) window.cancelAnimationFrame(raf);
       window.removeEventListener("load", onRealLoad);
+      // Never leave the document unscrollable because this unmounted early.
+      document.documentElement.style.overflow = "";
     };
-  }, [sessionKey, minVisibleMs]);
+  }, [suppressed]);
 
   if (!visible) return null;
 
