@@ -10,6 +10,7 @@
  * the database rather than in memory.
  */
 
+import { after } from "next/server";
 import { DomainError, isDomainError } from "@/domain/errors";
 import { ProviderError } from "@/lib/ai/types";
 import { recordAudit } from "@/lib/audit/audit-log";
@@ -131,16 +132,29 @@ export async function runWorkerTick(options: { maxJobs?: number } = {}): Promise
 }
 
 /**
- * Best-effort nudge so a customer does not wait for the next scheduled tick.
+ * Processes the queue after the current response has been sent.
  *
- * Deliberately fire-and-forget: the caller's response must not be delayed by
- * job processing, and a failed kick is harmless because the scheduler will
- * still drain the queue.
+ * This is the PRIMARY way jobs run, not an optimisation. Vercel's Hobby plan
+ * permits only one cron invocation per day, so a scheduled tick cannot be what
+ * a waiting customer depends on — the daily cron in vercel.json is a sweeper
+ * for stragglers, nothing more.
+ *
+ * `after()` is what makes this safe: a bare fire-and-forget promise can be
+ * killed the moment a serverless function returns its response, whereas
+ * `after()` keeps the invocation alive until the callback settles.
  */
 export function kickWorker(): void {
   if (process.env.STUDIO_DISABLE_WORKER_KICK === "1") return;
 
-  void runWorkerTick({ maxJobs: 1 }).catch((error) => {
-    logger.warn("Worker kick failed; scheduled tick will pick this up", { error });
-  });
+  const run = () =>
+    runWorkerTick({ maxJobs: 2 }).catch((error) => {
+      logger.warn("Worker kick failed; a later tick will pick this up", { error });
+    });
+
+  try {
+    // Throws when called outside a request lifecycle (e.g. from a test).
+    after(run);
+  } catch {
+    void run();
+  }
 }

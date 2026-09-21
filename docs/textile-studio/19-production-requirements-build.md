@@ -107,9 +107,26 @@ permanently redirects to `/woven`.
 ## Deviations from the specification, and why
 
 - **No Redis/BullMQ, no separate worker service.** The queue is a Postgres
-  table drained by `/api/studio/worker/tick` (Vercel Cron, `vercel.json`), plus
-  an opportunistic kick after enqueue. Correctness never depends on the kick.
-  This delivers every §32.1 capability without new infrastructure.
+  table, delivering every §32.1 capability without new infrastructure.
+
+  **How jobs actually get processed — this matters operationally.** The Vercel
+  account is on the Hobby plan, which permits a cron to run *once per day*.
+  A scheduled tick therefore cannot be what a waiting customer depends on. The
+  queue is driven instead by the request path:
+  - `kickWorker()` runs a tick via `after()` from `next/server`, which keeps
+    the serverless invocation alive past the response (a bare fire-and-forget
+    promise would be killed when the response is sent);
+  - every poll of `GET /api/studio/jobs/[jobId]` for a non-terminal job also
+    drives a tick — the client polls every ~2s while waiting, so the queue
+    drains for exactly as long as someone is waiting on it;
+  - the daily cron (`0 3 * * *`) is a **sweeper** for stragglers: a job whose
+    worker crashed, or one left RETRYING overnight.
+
+  Claiming is atomic (`FOR UPDATE SKIP LOCKED`), so a poll-driven tick and the
+  cron running simultaneously cannot process the same job twice.
+
+  **On a Pro plan**, change the schedule in `vercel.json` to `* * * * *` for
+  near-real-time processing; nothing else needs to change.
 - **No S3.** Supabase Storage, private bucket, short-lived signed URLs (§30.1).
 - **No `sharp`.** Image validation reads headers directly; derivative
   generation (§30.3 thumbnails) is **not implemented** — concept assets are

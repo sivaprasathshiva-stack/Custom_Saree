@@ -3,6 +3,7 @@ import { JOB_STAGE_LABELS, isTerminalJobStatus, type JobStage } from "@/domain/t
 import { withAuthedRoute } from "@/lib/api/handler";
 import { ok } from "@/lib/api/response";
 import { getJob } from "@/lib/jobs/queue";
+import { kickWorker } from "@/lib/jobs/worker";
 
 /**
  * Job status polling (§33).
@@ -24,6 +25,13 @@ export const GET = withAuthedRoute<Params>("GET /api/studio/jobs/[jobId]", async
 
   const terminal = isTerminalJobStatus(job.status);
   const stage = job.stage as JobStage | null;
+
+  // Each poll also drives the queue. On Vercel's Hobby plan a cron can only
+  // run once a day, so a customer waiting on a concept cannot depend on a
+  // scheduled tick — but they are polling this endpoint every couple of
+  // seconds anyway. Claiming is atomic, so a concurrent poll and cron tick
+  // cannot process the same job twice.
+  if (!terminal) kickWorker();
 
   return ok(
     {
