@@ -133,14 +133,45 @@ permanently redirects to `/woven`.
   served at full size. Flagged, not silently skipped.
 - **SSE/WebSocket not implemented.** §33 names polling as an acceptable
   transport; the client backs off using a server-supplied interval.
-- **Content moderation (§36) is not implemented.** No provider is configured.
-  This is a real gap before public launch, not an oversight.
-- **Admin review console (§49) is not rebuilt.** The existing read-only
-  `/admin/design-requests` list still works. Assignment, status transitions,
-  internal notes and job retry have database support and domain logic
-  (`allowedTransitions`, `requeueJob`, `internal_notes`) but no UI yet.
-- **Email (§48) remains the existing honest stub.** `ENABLE_EMAIL_NOTIFICATIONS`
-  defaults off.
+- **Thumbnails are generated** with `sharp` (§30.3) after the concept commit,
+  deliberately non-fatally: a missing thumbnail only means the UI falls back
+  to the full image, whereas failing the job would discard a concept.
+
+## AI providers
+
+Gemini is wired up, split along what the free tier actually permits:
+
+| Capability | Model | Free? |
+|---|---|---|
+| Saree analysis (§8.4) | `gemini-3.8-flash` | yes |
+| Smart Arrange (§11) | `gemini-3.8-flash` | yes |
+| Content moderation (§36) | `gemini-3.8-flash` | yes |
+| Weave optimization (§12) | none — deterministic rules | n/a |
+| Woven concept image (§14) | `gemini-3.1-flash-image` | **no, billing required** |
+| NILA drape frames (§19) | `gemini-3.1-flash-image` | **no, billing required** |
+
+Two switches, because of that split:
+
+- `AI_MODE=MOCK|GEMINI` — analysis, placement, moderation.
+- `AI_IMAGE_PROVIDER=MOCK|GEMINI` — concept and drape images.
+
+With `AI_MODE=GEMINI` and `AI_IMAGE_PROVIDER` unset, a deployment runs real
+analysis and real moderation for free while concepts remain locally rendered
+placeholders. `conceptRenderMode()` reports which is in effect so the UI never
+presents a placeholder as an AI generation.
+
+Weave optimization stays deterministic on purpose: a threshold check should be
+instant, free and identical on every run, not a model call.
+
+## Still not implemented
+
+- **Real NILA model photography.** Drape frames are generated (or, without
+  billing, placeholder silhouettes). Whether to use generated models or
+  commission real photography remains the business decision flagged in
+  `08-drape-architecture.md`.
+- **Designer assignment.** The console supports status transitions, notes and
+  job retry, but there is no "assign to designer" concept — no designer roster
+  exists yet.
 
 ## Verification status
 
@@ -152,21 +183,45 @@ Done in this pass:
   `/bridal` all return 200 with no server errors — confirming the configurator
   removal did not regress the marketing site.
 
-**Not done — the end-to-end flow has not been exercised against a live
-project.** The new tables, functions and storage bucket do not exist in the
-Supabase project yet (verified by a read-only probe: `designs` exists, every
-new table returns 404). Until `supabase/schema.sql` is re-run, Upload → Compose
-→ Woven → Drape → Submit cannot be tested for real. No claim is made that it
-works end to end.
+**The schema is applied and the flow is verified end to end**, in two layers:
+
+- `src/lib/jobs/pipeline.integration.test.ts` drives design → upload →
+  analysis → composition → generation → immutable version → thumbnail against
+  the live Supabase project with the mock provider.
+- `e2e/studio-journey.spec.ts` drives the same journey through a real browser,
+  including the drape, the submission form's §20.4 acknowledgement gate, the
+  confirmation screen and My Designs.
+
+### Bugs these tests found
+
+Worth recording, because each would have reached a customer:
+
+1. **Phantom jobs.** A plpgsql function returning NULL for a composite type
+   comes back through PostgREST as an object with every field null, so the
+   worker treated an empty queue as a job with a null id.
+2. **Valid images rejected.** `instanceof Uint8Array` fails across a realm
+   boundary, so every generated concept was discarded as "empty".
+3. **The worker would never have run in production.** Vercel's Hobby plan caps
+   cron at once per day and rejected the every-minute schedule outright.
+4. **The processing screen never finished.** A ref guard in the polling effect
+   meant StrictMode's double-invocation aborted the first poll and skipped the
+   second, leaving customers watching a spinner while the job had succeeded.
+5. **The confirmation screen was unreadable and wrong.** Dark-theme text on a
+   light background, and `slice(0, 8)` truncating `VL-2026-000019` to
+   `VL-2026-` — written when the id was a UUID.
+6. **My Designs was permanently empty.** It filtered on `status = 'active'`, a
+   value no design carries after the lifecycle migration, and archived to
+   lowercase `'archived'`.
+7. **Login and submission fields had no accessible names** — placeholders
+   only, so screen readers announced nothing (§41).
 
 ## What to do next
 
-1. **Run `supabase/schema.sql`** in the Supabase SQL editor. It is idempotent,
-   but it *does* rewrite `designs.status` values in place — review that
-   migration block first.
-2. **Set `WORKER_TICK_SECRET`** (or `CRON_SECRET`). Without it the worker route
-   refuses every request and no job will ever process.
-3. Walk the flow in a browser with `AI_MODE=MOCK`.
-4. Then, in priority order: content moderation (§36), the admin review console
-   (§49), thumbnail derivatives (§30.3), and a real provider adapter behind
-   `AI_MODE=LIVE`.
+1. **Set `GEMINI_API_KEY`** and `AI_MODE=GEMINI` to turn on real analysis,
+   placement and moderation at no cost.
+2. **Decide on Gemini billing.** Without it, concepts stay placeholders. With
+   it, set `AI_IMAGE_PROVIDER=GEMINI`.
+3. **Set `RESEND_API_KEY`, `EMAIL_FROM_ADDRESS`, `VELVOREA_OFFICE_EMAIL` and
+   `ENABLE_EMAIL_NOTIFICATIONS=true`** so submissions reach the office.
+4. **Grant yourself admin**: `update public.profiles set is_admin = true where
+   id = '<your-user-uuid>';` — the console is at `/admin`.

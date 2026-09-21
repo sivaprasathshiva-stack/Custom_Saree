@@ -125,6 +125,7 @@ export const POST = withAuthedRoute<Params>(
         customerEmail: input.email,
         customerPhone: input.phone,
         requiredByDate: input.requiredByDate,
+        conceptId: design.public_id,
       });
       await supabase.from("notification_events").insert({
         submission_id: submission.id,

@@ -11,7 +11,8 @@ import { recordAudit } from "@/lib/audit/audit-log";
 import { enqueueJob } from "@/lib/jobs/queue";
 import { kickWorker } from "@/lib/jobs/worker";
 import { enforceRateLimit } from "@/lib/security/rate-limit";
-import { signedUrlsFor, storeUploadedImage } from "@/lib/storage/design-assets";
+import { deleteStoredAsset, signedUrlsFor, storeUploadedImage } from "@/lib/storage/design-assets";
+import { assertContentAllowed } from "@/lib/studio/moderation";
 import { countAssets, insertAsset, listAssets } from "@/lib/studio/repository";
 
 /**
@@ -110,6 +111,32 @@ export const POST = withAuthedRoute<Params>(
       bytes,
       declaredMimeType: file.type || undefined,
     });
+
+    // Screen the customer's own artwork before it can be composed onto a
+    // saree or reach the design team (§36). The saree reference photograph is
+    // not screened — it is a picture of the customer's own garment, and
+    // rejecting those would be both useless and insulting.
+    if (rawType === "IDEA_IMAGE") {
+      const [previewUrl] = [...(await signedUrlsFor([stored.storageKey])).values()];
+      try {
+        await assertContentAllowed(
+          {
+            image: {
+              assetId,
+              url: previewUrl,
+              mimeType: stored.mimeType,
+              width: stored.width,
+              height: stored.height,
+            },
+          },
+          { designId: design.id, userId: context.userId, subject: "IDEA_IMAGE", entityId: assetId },
+        );
+      } catch (error) {
+        // Rejected content must not linger in the bucket.
+        await deleteStoredAsset(stored.storageKey);
+        throw error;
+      }
+    }
 
     const asset = await insertAsset({
       id: assetId,

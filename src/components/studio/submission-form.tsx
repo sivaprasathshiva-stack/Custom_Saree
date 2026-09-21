@@ -60,27 +60,47 @@ export function SubmissionForm({ designId, designName }: { designId: string; des
     label: string,
     type: string = "text",
     required = true,
-  ) => (
-    <div>
-      <label className="font-mono text-[10px] uppercase tracking-[0.15em] text-stone">
-        {label}
-        {required ? " *" : ""}
-      </label>
-      <input
-        type={type}
-        value={(values[key] as string) ?? ""}
-        onChange={(e) =>
-          set(key, (type === "number" ? Number(e.target.value) : e.target.value) as never)
-        }
-        className="mt-1 w-full border border-line-dark bg-transparent px-3 py-2 text-sm text-ivory focus:border-brass focus:outline-none"
-      />
-      {errors[key] && <p className="mt-1 text-xs text-danger">{errors[key]}</p>}
-    </div>
-  );
+  ) => {
+    const inputId = `submission-${key}`;
+    const errorId = `${inputId}-error`;
+    const error = errors[key];
+
+    return (
+      <div>
+        {/* htmlFor/id pair the label to the control, and aria-describedby
+            ties the error to it, so the field's problem is announced along
+            with its name rather than floating unattached (§41). */}
+        <label
+          htmlFor={inputId}
+          className="font-mono text-[10px] uppercase tracking-[0.15em] text-gray"
+        >
+          {label}
+          {required ? " *" : ""}
+        </label>
+        <input
+          id={inputId}
+          type={type}
+          required={required}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          value={(values[key] as string) ?? ""}
+          onChange={(e) =>
+            set(key, (type === "number" ? Number(e.target.value) : e.target.value) as never)
+          }
+          className="mt-1 w-full border border-line bg-transparent px-3 py-2 text-sm text-ink focus:border-ink focus:outline-none"
+        />
+        {error && (
+          <p id={errorId} className="mt-1 text-xs text-danger">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  };
 
   return (
     <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
-      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-stone">
+      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray">
         Submitting: {designName}
       </p>
       <div className="grid gap-5 sm:grid-cols-2">
@@ -100,7 +120,7 @@ export function SubmissionForm({ designId, designName }: { designId: string; des
       </div>
       <div>
         {field("requiredByDate", "Required-by date", "date")}
-        <p className="mt-2 max-w-md text-xs text-stone">
+        <p className="mt-2 max-w-md text-xs text-gray">
           This date helps our design team understand your timeline. Final delivery timing will be
           confirmed after design and production review.
         </p>
@@ -111,23 +131,29 @@ export function SubmissionForm({ designId, designName }: { designId: string; des
         {field("budgetRange", "Budget range", "text", false)}
       </div>
       <div>
-        <label className="font-mono text-[10px] uppercase tracking-[0.15em] text-stone">Comments</label>
+        <label
+          htmlFor="submission-comments"
+          className="font-mono text-[10px] uppercase tracking-[0.15em] text-gray"
+        >
+          Comments
+        </label>
         <textarea
+          id="submission-comments"
           value={values.comments ?? ""}
           onChange={(e) => set("comments", e.target.value)}
           rows={3}
-          className="mt-1 w-full border border-line-dark bg-transparent px-3 py-2 text-sm text-ivory focus:border-brass focus:outline-none"
+          className="mt-1 w-full border border-line bg-transparent px-3 py-2 text-sm text-ink focus:border-ink focus:outline-none"
         />
       </div>
 
       {/* §20.4 — recorded with a timestamp and terms version on submission. */}
-      <div className="border-t border-line-dark pt-5">
-        <label className="flex cursor-pointer items-start gap-3 text-sm text-ivory">
+      <div className="border-t border-line pt-5">
+        <label className="flex cursor-pointer items-start gap-3 text-sm text-ink">
           <input
             type="checkbox"
             checked={values.termsAccepted ?? false}
             onChange={(e) => set("termsAccepted", e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 accent-brass-bright"
+            className="mt-0.5 h-4 w-4 shrink-0 accent-ink"
           />
           <span className="leading-relaxed">
             I understand this is a digital concept and final production appearance is subject to
@@ -144,7 +170,7 @@ export function SubmissionForm({ designId, designName }: { designId: string; des
       <button
         type="submit"
         disabled={submitting}
-        className="mt-2 self-start bg-brass-bright px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.15em] text-charcoal hover:bg-ivory disabled:opacity-50"
+        className="mt-2 self-start bg-ink px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.15em] text-paper hover:bg-ink-soft disabled:opacity-50"
       >
         {submitting ? "Submitting…" : "Submit to VELVOREA"}
       </button>

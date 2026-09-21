@@ -208,6 +208,47 @@ export interface DrapeProvider {
   generateDrape(input: DrapeInput, signal?: AbortSignal): Promise<ProviderResult<DrapeResult>>;
 }
 
+// --- content moderation (§36) ----------------------------------------------
+
+/**
+ * Why content was refused. Kept deliberately coarse: §36 says not to reveal
+ * moderation internals, so the customer only ever sees a generic message —
+ * this detail is for logs and the review console.
+ */
+export const MODERATION_CATEGORIES = [
+  "SEXUAL",
+  "VIOLENCE",
+  "HATE",
+  "HARASSMENT",
+  "SELF_HARM",
+  "ILLEGAL",
+  "OTHER",
+] as const;
+
+export type ModerationCategory = (typeof MODERATION_CATEGORIES)[number];
+
+export interface ModerationVerdict {
+  allowed: boolean;
+  categories: ModerationCategory[];
+  /** Internal-only rationale. Never returned to a customer. */
+  reason: string | null;
+}
+
+export interface ModerationInput {
+  /** Customer text placed on the saree, if any. */
+  text?: string | null;
+  /** An uploaded image to screen. */
+  image?: SourceImage | null;
+}
+
+export interface ModerationProvider {
+  readonly name: string;
+  moderate(
+    input: ModerationInput,
+    signal?: AbortSignal,
+  ): Promise<ProviderResult<ModerationVerdict>>;
+}
+
 // --- the provider set ------------------------------------------------------
 
 export interface ProviderSet {
@@ -216,4 +257,5 @@ export interface ProviderSet {
   optimization: WeaveOptimizationProvider;
   concept: WovenConceptProvider;
   drape: DrapeProvider;
+  moderation: ModerationProvider;
 }

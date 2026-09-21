@@ -203,6 +203,27 @@ describeIf("woven concept pipeline (live Supabase, mock AI)", () => {
     expect(svg.startsWith("<svg")).toBe(true);
     expect(svg).toContain("SEYAAN");
 
+    // --- thumbnail derivative (§30.3) -------------------------------------
+    const { data: withThumbnail } = await supabase
+      .from("concept_versions")
+      .select("thumbnail_asset_id")
+      .eq("id", versions[0].id)
+      .single<{ thumbnail_asset_id: string | null }>();
+
+    expect(withThumbnail?.thumbnail_asset_id).toBeTruthy();
+
+    const { data: thumbnailAsset } = await supabase
+      .from("design_assets")
+      .select("storage_key, mime_type, width, size_bytes")
+      .eq("id", withThumbnail!.thumbnail_asset_id!)
+      .single<{ storage_key: string; mime_type: string; width: number; size_bytes: number }>();
+
+    expect(thumbnailAsset?.mime_type).toBe("image/webp");
+    expect(thumbnailAsset!.width).toBeLessThanOrEqual(480);
+    // The whole point: materially smaller than the full concept.
+    expect(thumbnailAsset!.size_bytes).toBeLessThan(conceptAsset!.size_bytes);
+    createdStorageKeys.push(thumbnailAsset!.storage_key);
+
     // --- lifecycle history was recorded (§29.13) --------------------------
     const { data: history } = await supabase
       .from("design_status_history")

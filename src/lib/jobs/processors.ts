@@ -18,6 +18,7 @@ import { ProviderError, type GeneratedImage, type SourceImage } from "@/lib/ai/t
 import { recordAudit } from "@/lib/audit/audit-log";
 import { logger } from "@/lib/observability/logger";
 import { signedUrlFor, storeGeneratedImage } from "@/lib/storage/design-assets";
+import { createThumbnail } from "@/lib/storage/thumbnails";
 import {
   getAnalysis,
   getComposition,
@@ -189,6 +190,49 @@ export async function processWovenConcept(job: JobRow): Promise<void> {
   if (error) {
     log.error("Concept commit failed", { error });
     throw new DomainError("INTERNAL_ERROR", { cause: error });
+  }
+
+  // Thumbnail derivative (§30.3). Deliberately after the atomic commit and
+  // deliberately non-fatal: the concept is already safely stored, and a
+  // missing thumbnail only means the UI shows the full image instead.
+  if (typeof versionId === "string") {
+    try {
+      const thumbnail = await createThumbnail(result.data.bytes);
+      if (thumbnail) {
+        const thumbnailAssetId = crypto.randomUUID();
+        const storedThumbnail = await storeGeneratedImage({
+          userId: job.user_id,
+          designId: job.design_id,
+          assetId: thumbnailAssetId,
+          bytes: thumbnail.bytes,
+          mimeType: thumbnail.mimeType,
+          width: thumbnail.width,
+          height: thumbnail.height,
+          variant: "thumbnail",
+        });
+
+        await insertAsset({
+          id: thumbnailAssetId,
+          designId: job.design_id,
+          userId: job.user_id,
+          type: "THUMBNAIL",
+          storageKey: storedThumbnail.storageKey,
+          originalFilename: null,
+          mimeType: storedThumbnail.mimeType,
+          sizeBytes: storedThumbnail.sizeBytes,
+          width: storedThumbnail.width,
+          height: storedThumbnail.height,
+          checksum: storedThumbnail.checksum,
+        });
+
+        await createAdminClient()
+          .from("concept_versions")
+          .update({ thumbnail_asset_id: thumbnailAssetId })
+          .eq("id", versionId);
+      }
+    } catch (error) {
+      log.warn("Thumbnail step failed; concept is unaffected", { error });
+    }
   }
 
   await recordAudit({

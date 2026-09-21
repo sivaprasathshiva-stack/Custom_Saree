@@ -13,6 +13,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    // e2e/ belongs to Playwright — its specs import @playwright/test and
+    // cannot run under Vitest. `npm run test:e2e` runs those.
+    exclude: ["**/node_modules/**", "**/dist/**", "**/.next/**", "e2e/**"],
   },
   resolve: {
     alias: {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { JOB_STAGE_LABELS, type JobStage } from "@/domain/types";
 import { ApiError, apiGet, apiPost, pollJob, type JobSnapshot } from "@/lib/api/client";
 
@@ -81,13 +81,17 @@ export function WovenConceptPanel({
   }, [designId]);
 
   // Watch the job through to a terminal state, then load what it produced.
-  const watchedJob = useRef<string | null>(null);
+  //
+  // There is deliberately no "already watched this id" ref guard here. Under
+  // StrictMode the effect runs, is cleaned up, and runs again — a guard keyed
+  // on the job id would let the first run abort the poll and the second run
+  // skip it, leaving the customer on the processing screen forever while the
+  // job quietly succeeded. Aborting and restarting is cheap; not polling is
+  // not recoverable.
   useEffect(() => {
-    if (!jobId || watchedJob.current === jobId) return;
-    watchedJob.current = jobId;
+    if (!jobId) return;
 
     const controller = new AbortController();
-    setError(null);
 
     void pollJob(jobId, { signal: controller.signal, onUpdate: setJob })
       .then(async (final) => {
@@ -108,10 +112,11 @@ export function WovenConceptPanel({
           });
         }
       })
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setError({ message: "We lost contact while creating your concept.", retryable: true });
-        }
+      .catch((caught: unknown) => {
+        // An abort is this effect being cleaned up, not a failure.
+        if (controller.signal.aborted) return;
+        if (caught instanceof DOMException && caught.name === "AbortError") return;
+        setError({ message: "We lost contact while creating your concept.", retryable: true });
       });
 
     return () => controller.abort();
@@ -125,7 +130,6 @@ export function WovenConceptPanel({
         `/api/studio/designs/${designId}/woven-concepts`,
         refinement ? { refinement } : undefined,
       );
-      watchedJob.current = null;
       setJobId(result.jobId);
       setJob(null);
     } catch (caught) {

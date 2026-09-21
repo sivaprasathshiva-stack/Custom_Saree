@@ -1,31 +1,52 @@
 /**
- * Provider selection and the safety wrapper every provider call passes through
- * (requirements §15, §57, §65, §71).
+ * Provider selection (requirements §15, §57, §65, §71).
  *
- * The rest of the application asks for `providers()` and gets an interface.
- * Which implementation it receives — mock or a real vendor — is an environment
- * decision made here and nowhere else.
+ * Two independent switches, because Gemini's free tier splits along exactly
+ * this line:
+ *
+ *   AI_MODE           MOCK | GEMINI   — analysis, placement, moderation
+ *   AI_IMAGE_PROVIDER MOCK | GEMINI   — woven concept and drape images
+ *
+ * Text and vision are free on `gemini-3.8-flash`. Every Gemini *image* model
+ * is paid-only, so image generation stays opt-in: a deployment can run real
+ * analysis and real moderation for nothing, and turn on paid image generation
+ * the day billing is enabled, without a code change.
+ *
+ * When image generation is left on MOCK, the concept is a locally rendered
+ * placeholder. That is surfaced to the customer (see `conceptRenderMode`) —
+ * placeholder output is never presented as a real generation.
  */
 
 import { aiKillSwitchEngaged } from "@/config/feature-flags";
+import { createGeminiProviders } from "./gemini/provider";
+import { isGeminiConfigured, isImageGenerationEnabled } from "./gemini/client";
 import { createMockProviderSet, MOCK_PROVIDER_NAME } from "./mock-provider";
 import { ProviderError, type ProviderSet } from "./types";
 
-export type AiMode = "MOCK" | "LIVE";
+export type AiMode = "MOCK" | "GEMINI";
 
 /**
- * Mock is the default. A deployment only makes paid calls when it has
- * explicitly opted in AND supplied a key — forgetting to set AI_MODE can never
- * silently start spending money.
+ * Mock is the default. A deployment only calls a real provider when it has
+ * explicitly opted in AND supplied a key, so forgetting to set AI_MODE can
+ * never start spending money or leaking customer images to a vendor.
  */
 export function aiMode(): AiMode {
   const configured = (process.env.AI_MODE ?? "").trim().toUpperCase();
-  if (configured === "LIVE") return "LIVE";
+  // LIVE is accepted as a synonym so an older deployment's env keeps working.
+  if ((configured === "GEMINI" || configured === "LIVE") && isGeminiConfigured()) return "GEMINI";
   return "MOCK";
 }
 
 export function isMockMode(): boolean {
   return aiMode() === "MOCK";
+}
+
+/**
+ * How the woven concept image is actually produced. The UI shows this so a
+ * customer is never told a placeholder is an AI generation (§2.3, §16.5).
+ */
+export function conceptRenderMode(): "ai" | "placeholder" {
+  return aiMode() === "GEMINI" && isImageGenerationEnabled() ? "ai" : "placeholder";
 }
 
 /** Per-call timeout. A hung provider must never hold a worker forever (§15.2). */
@@ -36,8 +57,8 @@ export function providerTimeoutMs(): number {
 
 /**
  * Runs a provider call under a timeout, converting anything that escapes into
- * a sanitized ProviderError. This is the single place a vendor exception can
- * turn into something the application is willing to show or store (§15.2).
+ * a sanitized ProviderError — the single place a vendor exception can become
+ * something we are willing to show or store (§15.2).
  */
 export async function callProvider<T>(
   providerName: string,
@@ -69,9 +90,8 @@ export async function callProvider<T>(
       });
     }
 
-    // Anything unrecognised is treated as transient but is NOT allowed to
-    // carry the original message outward — that message may contain a key,
-    // a signed URL or a customer's image data.
+    // Anything unrecognised is transient, but its message is NOT allowed
+    // outward — it may carry a key, a signed URL or customer image data.
     throw new ProviderError(`${operation} failed.`, {
       retryable: true,
       provider: providerName,
@@ -88,22 +108,29 @@ let cached: ProviderSet | null = null;
 /**
  * The active provider set.
  *
- * LIVE mode currently has no vendor adapter wired up. Rather than silently
- * falling back to mock output and presenting it to a customer as a real
- * generation, this throws — an unconfigured production deployment must fail
- * loudly, not quietly serve placeholders.
+ * In GEMINI mode the image providers come from Gemini only when image
+ * generation is enabled; otherwise the mock renderer supplies the placeholder
+ * concept while analysis and moderation still run for real.
  */
 export function providers(): ProviderSet {
   if (cached) return cached;
 
-  if (aiMode() === "LIVE") {
-    throw new ProviderError(
-      "AI_MODE=LIVE but no provider adapter is configured. Implement an adapter in src/lib/ai/ and register it here.",
-      { retryable: false, provider: "none", reason: "NOT_CONFIGURED" },
-    );
+  if (aiMode() === "MOCK") {
+    cached = createMockProviderSet();
+    return cached;
   }
 
-  cached = createMockProviderSet();
+  const gemini = createGeminiProviders();
+  const mock = createMockProviderSet();
+
+  cached = {
+    analysis: gemini.analysis,
+    placement: gemini.placement,
+    optimization: gemini.optimization,
+    moderation: gemini.moderation,
+    concept: isImageGenerationEnabled() ? gemini.concept : mock.concept,
+    drape: isImageGenerationEnabled() ? gemini.drape : mock.drape,
+  };
   return cached;
 }
 
@@ -113,5 +140,5 @@ export function resetProviderCache(): void {
 }
 
 export function activeProviderName(): string {
-  return aiMode() === "LIVE" ? "unconfigured" : MOCK_PROVIDER_NAME;
+  return aiMode() === "GEMINI" ? "gemini" : MOCK_PROVIDER_NAME;
 }

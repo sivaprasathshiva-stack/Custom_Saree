@@ -1,5 +1,5 @@
 import { MAX_CONCEPTS_PER_DESIGN, MAX_GENERATIONS_PER_USER_PER_DAY } from "@/config/limits";
-import { isEmpty } from "@/domain/composition";
+import { isEmpty, textObjects } from "@/domain/composition";
 import { DomainError } from "@/domain/errors";
 import { generationIdempotencyKey, hashComposition } from "@/domain/ids";
 import { requireEditableDesign, requireOwnedDesign, readJson, withAuthedRoute } from "@/lib/api/handler";
@@ -9,6 +9,7 @@ import { enqueueJob, hasActiveJob } from "@/lib/jobs/queue";
 import { kickWorker } from "@/lib/jobs/worker";
 import { enforceRateLimit } from "@/lib/security/rate-limit";
 import { signedUrlsFor } from "@/lib/storage/design-assets";
+import { assertContentAllowed } from "@/lib/studio/moderation";
 import {
   generationQuota,
   getLatestComposition,
@@ -50,6 +51,21 @@ export const POST = withAuthedRoute<Params>(
     const compositionRow = await getLatestComposition(design.id);
     if (!compositionRow || isEmpty(compositionRow.composition_json)) {
       throw new DomainError("COMPOSITION_EMPTY");
+    }
+
+    // --- content moderation (§36) -----------------------------------------
+    // Screened here rather than on every autosave: this is the moment the
+    // words are about to become a woven concept and reach VELVOREA.
+    const customerText = textObjects(compositionRow.composition_json)
+      .map((object) => object.text)
+      .join(" ")
+      .trim();
+
+    if (customerText.length > 0) {
+      await assertContentAllowed(
+        { text: customerText },
+        { designId: design.id, userId: context.userId, subject: "TEXT" },
+      );
     }
 
     // --- cost controls (§65) ----------------------------------------------

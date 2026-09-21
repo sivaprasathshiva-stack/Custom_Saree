@@ -28,13 +28,16 @@ import {
   type SareeAnalysisProvider,
   type SmartPlacementInput,
   type SmartPlacementProvider,
+  type ModerationInput,
+  type ModerationProvider,
+  type ModerationVerdict,
   type WeaveOptimization,
   type WeaveOptimizationInput,
   type WeaveOptimizationProvider,
-  type WeaveWarning,
   type WovenConceptInput,
   type WovenConceptProvider,
 } from "./types";
+import { optimizeForWeaving } from "./weave-rules";
 
 const PROVIDER_NAME = "mock";
 const MODEL = "velvorea-mock-loom";
@@ -270,14 +273,10 @@ class MockSmartPlacementProvider implements SmartPlacementProvider {
 // --- weave optimization (§12) ----------------------------------------------
 
 /**
- * Thresholds below which a motif or letterform stops surviving the loom.
- * These are guidance defaults, not manufacturing truth — §12.1 is explicit
- * that final feasibility is decided at VELVOREA's technical review.
+ * Weave feasibility is a deterministic threshold check shared by every
+ * provider set (../weave-rules.ts) — it is not something a mock needs to
+ * fake, and not something a real model should be paid to re-derive.
  */
-const MIN_WEAVABLE_TEXT_SCALE = 0.6;
-const MIN_WEAVABLE_IMAGE_SCALE = 0.25;
-const EDGE_MARGIN = 0.04;
-
 class MockWeaveOptimizationProvider implements WeaveOptimizationProvider {
   readonly name = PROVIDER_NAME;
 
@@ -288,50 +287,37 @@ class MockWeaveOptimizationProvider implements WeaveOptimizationProvider {
     const started = Date.now();
     await delay(simulatedDelayMs(400), signal);
 
-    const warnings: WeaveWarning[] = [];
-    const objects = input.composition.objects.map((object) => {
-      let { x, y, scale } = object;
+    return {
+      data: optimizeForWeaving(input.composition),
+      metadata: metadata("WOVEN_CONCEPT_PROMPT", Date.now() - started),
+    };
+  }
+}
 
-      if (object.type === "text" && scale < MIN_WEAVABLE_TEXT_SCALE) {
-        warnings.push({
-          objectId: object.id,
-          severity: "warning",
-          message: "Your text may be difficult to weave at this size.",
-        });
-        scale = MIN_WEAVABLE_TEXT_SCALE;
-      }
+/**
+ * Mock moderation allows everything except a deliberate trigger phrase, so
+ * the blocked-content path can be exercised in tests and development without
+ * anyone having to author genuinely objectionable material.
+ */
+class MockModerationProvider implements ModerationProvider {
+  readonly name = PROVIDER_NAME;
 
-      if (object.type === "image" && scale < MIN_WEAVABLE_IMAGE_SCALE) {
-        warnings.push({
-          objectId: object.id,
-          severity: "warning",
-          message: "Fine detail at this size may be lost on the loom.",
-        });
-        scale = MIN_WEAVABLE_IMAGE_SCALE;
-      }
+  async moderate(
+    input: ModerationInput,
+    signal?: AbortSignal,
+  ): Promise<ProviderResult<ModerationVerdict>> {
+    const started = Date.now();
+    await delay(simulatedDelayMs(200), signal);
 
-      const clampedX = Math.min(1 - EDGE_MARGIN, Math.max(EDGE_MARGIN, x));
-      const clampedY = Math.min(1 - EDGE_MARGIN, Math.max(EDGE_MARGIN, y));
-      if (clampedX !== x || clampedY !== y) {
-        warnings.push({
-          objectId: object.id,
-          severity: "info",
-          message: "Moved slightly inward so the design clears the selvedge.",
-        });
-        x = clampedX;
-        y = clampedY;
-      }
-
-      return { ...object, x, y, scale };
-    });
+    const blocked = (input.text ?? "").toLowerCase().includes("blockme");
 
     return {
       data: {
-        warnings,
-        proposed: { ...input.composition, objects },
-        alreadyOptimal: warnings.length === 0,
+        allowed: !blocked,
+        categories: blocked ? ["OTHER"] : [],
+        reason: blocked ? "Mock moderation trigger phrase." : null,
       },
-      metadata: metadata("WOVEN_CONCEPT_PROMPT", Date.now() - started),
+      metadata: metadata("SAREE_ANALYSIS_PROMPT", Date.now() - started),
     };
   }
 }
@@ -544,6 +530,7 @@ export function createMockProviderSet(): ProviderSet {
     optimization: new MockWeaveOptimizationProvider(),
     concept: new MockWovenConceptProvider(),
     drape: new MockDrapeProvider(),
+    moderation: new MockModerationProvider(),
   };
 }
 

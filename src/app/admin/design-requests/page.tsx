@@ -1,88 +1,120 @@
-import { redirect } from "next/navigation";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
-import { toCustomerStatusLabel } from "@/lib/studio/submission-status";
+import Link from "next/link";
+import { customerStatusLabel } from "@/domain/design-state";
+import { DESIGN_STATUSES, type DesignStatus } from "@/domain/types";
+import { loadQueue } from "@/lib/studio/admin-service";
 
-export const metadata = { title: "Design Requests — VELVOREA Admin" };
+export const metadata = { title: "Queue — VELVOREA Design Team" };
+export const dynamic = "force-dynamic";
 
-/**
- * Read-only design-requests list (PRD §38), explicitly scoped down per this
- * task: no assignment, notes, or the rest of the full designer workspace
- * (§39) — just Concept ID / Customer / Design / Material / Submitted /
- * Required By / Status / Priority.
- *
- * Access control: gated on `profiles.is_admin`, checked server-side here —
- * never trust a client-supplied flag. There is no admin UI yet to grant
- * this; it's a manual DB update:
- *   update public.profiles set is_admin = true where id = '<user-uuid>';
- */
-export default async function DesignRequestsPage() {
-  if (!isSupabaseConfigured()) redirect("/");
+const FILTERS: DesignStatus[] = [
+  "SUBMITTED",
+  "IN_REVIEW",
+  "REFINING",
+  "SAMPLE",
+  "APPROVED",
+  "PRODUCTION",
+  "COMPLETED",
+];
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/studio");
+function isDesignStatus(value: string | undefined): value is DesignStatus {
+  return value !== undefined && (DESIGN_STATUSES as readonly string[]).includes(value);
+}
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile?.is_admin) redirect("/studio");
-
-  const { data: submissions } = await supabase
-    .from("submissions")
-    .select("id, full_name, required_by_date, submitted_at, status, priority, design_id, designs(name, design)")
-    .order("submitted_at", { ascending: false });
+/** Submission queue (§49.2). */
+export default async function DesignRequestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const { status } = await searchParams;
+  const filter = isDesignStatus(status) ? status : undefined;
+  const rows = await loadQueue(filter);
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl px-6 py-16 text-ivory">
-      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-stone">Admin</p>
-      <h1 className="mt-2 font-serif text-3xl">Design Requests</h1>
+    <div>
+      <h1 className="font-display text-3xl">Queue</h1>
 
-      <div className="mt-8 overflow-x-auto border border-line-dark">
-        <table className="w-full min-w-[900px] text-left font-mono text-xs">
-          <thead className="border-b border-line-dark text-stone">
-            <tr>
-              <th className="px-3 py-2">Concept ID</th>
-              <th className="px-3 py-2">Customer</th>
-              <th className="px-3 py-2">Design</th>
-              <th className="px-3 py-2">Material</th>
-              <th className="px-3 py-2">Submitted</th>
-              <th className="px-3 py-2">Required By</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Priority</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(submissions ?? []).map((s) => {
-              const design = Array.isArray(s.designs) ? s.designs[0] : s.designs;
-              const material = (design?.design as { materialId?: string } | null)?.materialId ?? "—";
-              return (
-                <tr key={s.id} className="border-b border-line-dark/50 text-ivory">
-                  <td className="px-3 py-2">{s.id.slice(0, 8).toUpperCase()}</td>
-                  <td className="px-3 py-2">{s.full_name}</td>
-                  <td className="px-3 py-2">{design?.name ?? "—"}</td>
-                  <td className="px-3 py-2">{material}</td>
-                  <td className="px-3 py-2">{new Date(s.submitted_at).toLocaleDateString("en-IN")}</td>
-                  <td className="px-3 py-2">{s.required_by_date}</td>
-                  <td className="px-3 py-2">{toCustomerStatusLabel(s.status)}</td>
-                  <td className="px-3 py-2 capitalize">{s.priority}</td>
-                </tr>
-              );
-            })}
-            {(submissions ?? []).length === 0 && (
-              <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-stone">
-                  No submissions yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Link
+          href="/admin/design-requests"
+          className={[
+            "rounded-full border px-4 py-1.5 text-xs font-semibold transition",
+            filter ? "border-line hover:border-ink" : "border-ink bg-ink text-paper",
+          ].join(" ")}
+        >
+          All
+        </Link>
+        {FILTERS.map((entry) => (
+          <Link
+            key={entry}
+            href={`/admin/design-requests?status=${entry}`}
+            className={[
+              "rounded-full border px-4 py-1.5 text-xs font-semibold transition",
+              filter === entry ? "border-ink bg-ink text-paper" : "border-line hover:border-ink",
+            ].join(" ")}
+          >
+            {customerStatusLabel(entry)}
+          </Link>
+        ))}
       </div>
-    </main>
+
+      {rows.length === 0 ? (
+        <p className="mt-10 text-sm text-gray">
+          {filter
+            ? `Nothing at ${customerStatusLabel(filter)} right now.`
+            : "No concepts have been submitted yet."}
+        </p>
+      ) : (
+        <div className="mt-8 overflow-x-auto">
+          <table className="w-full min-w-[720px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-line text-left">
+                <th className="py-3 pr-4 font-mono text-[10px] uppercase tracking-[0.15em] text-gray">
+                  Concept
+                </th>
+                <th className="py-3 pr-4 font-mono text-[10px] uppercase tracking-[0.15em] text-gray">
+                  Customer
+                </th>
+                <th className="py-3 pr-4 font-mono text-[10px] uppercase tracking-[0.15em] text-gray">
+                  Required by
+                </th>
+                <th className="py-3 pr-4 font-mono text-[10px] uppercase tracking-[0.15em] text-gray">
+                  Occasion
+                </th>
+                <th className="py-3 pr-4 font-mono text-[10px] uppercase tracking-[0.15em] text-gray">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.designId} className="border-b border-line/60 hover:bg-paper-dim">
+                  <td className="py-3 pr-4">
+                    <Link
+                      href={`/admin/designs/${row.designId}`}
+                      className="font-mono text-xs hover:text-accent"
+                    >
+                      {row.conceptId ?? row.designId.slice(0, 8)}
+                    </Link>
+                    <div className="mt-0.5 text-xs text-gray">{row.name}</div>
+                  </td>
+                  <td className="py-3 pr-4">
+                    <div>{row.customerName ?? "—"}</div>
+                    <div className="text-xs text-gray">{row.customerEmail ?? ""}</div>
+                  </td>
+                  <td className="py-3 pr-4 tabular-nums">{row.requiredBy ?? "—"}</td>
+                  <td className="py-3 pr-4">{row.occasion ?? "—"}</td>
+                  <td className="py-3 pr-4">
+                    <span className="rounded-full border border-line px-2.5 py-1 text-[11px] font-semibold">
+                      {customerStatusLabel(row.status)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }

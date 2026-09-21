@@ -81,36 +81,57 @@ export function AuthForm({
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* A placeholder is not an accessible name — it vanishes on focus and
+          is not reliably announced. Each field gets a real label, visually
+          hidden so the original design is unchanged (§41). */}
       {mode === "sign-up" && (
-        <input
-          type="text"
-          required
-          placeholder="Full name"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          className={inputClass}
-          autoComplete="name"
-        />
+        <div>
+          <label htmlFor="auth-full-name" className="sr-only">
+            Full name
+          </label>
+          <input
+            id="auth-full-name"
+            type="text"
+            required
+            placeholder="Full name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className={inputClass}
+            autoComplete="name"
+          />
+        </div>
       )}
-      <input
-        type="email"
-        required
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className={inputClass}
-        autoComplete="email"
-      />
-      <input
-        type="password"
-        required
-        minLength={8}
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className={inputClass}
-        autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
-      />
+      <div>
+        <label htmlFor="auth-email" className="sr-only">
+          Email
+        </label>
+        <input
+          id="auth-email"
+          type="email"
+          required
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className={inputClass}
+          autoComplete="email"
+        />
+      </div>
+      <div>
+        <label htmlFor="auth-password" className="sr-only">
+          Password
+        </label>
+        <input
+          id="auth-password"
+          type="password"
+          required
+          minLength={8}
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className={inputClass}
+          autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
+        />
+      </div>
       {status === "error" && (
         <p className="text-sm text-red-700" role="alert">
           {errorMessage}
