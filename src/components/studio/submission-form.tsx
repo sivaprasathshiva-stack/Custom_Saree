@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { validateSubmission, type SubmissionInput } from "@/lib/studio/submission-validation";
+import { validateStudioSubmission, type SubmissionInput } from "@/lib/studio/submission-validation";
+import { ApiError, apiPost } from "@/lib/api/client";
 
 /**
- * Submission form (PRD §32-33). Client-side validation mirrors
- * src/lib/studio/submission-validation.ts, which the API route also runs —
- * so this form can never bypass server-side checks, only give faster
- * feedback.
+ * Submission form (§20).
+ *
+ * Client-side validation mirrors src/lib/studio/submission-validation.ts,
+ * which the API route runs again — this form gives faster feedback, it never
+ * substitutes for the server's check (§85 Rule 6).
  */
 export function SubmissionForm({ designId, designName }: { designId: string; designName: string }) {
   const router = useRouter();
   const [values, setValues] = useState<Partial<SubmissionInput>>({});
-  const [errors, setErrors] = useState<ReturnType<typeof validateSubmission>["errors"]>({});
+  const [errors, setErrors] = useState<ReturnType<typeof validateStudioSubmission>["errors"]>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -22,27 +24,20 @@ export function SubmissionForm({ designId, designName }: { designId: string; des
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const result = validateSubmission(values);
+    const result = validateStudioSubmission(values);
     setErrors(result.errors);
     if (!result.valid) return;
 
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const res = await fetch("/api/studio/submissions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ designId, ...values }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setSubmitError(body.error ?? "Could not submit your design. Please try again.");
-        setSubmitting(false);
-        return;
-      }
-      const body = await res.json();
+      const body = await apiPost<{ submissionId: string; conceptId: string; submittedAt: string }>(
+        `/api/studio/designs/${designId}/submission`,
+        values,
+      );
       const params = new URLSearchParams({
-        conceptId: body.id,
+        // The human-readable VL-YYYY-NNNNNN id, not the row id (§21).
+        conceptId: body.conceptId ?? "",
         submittedAt: body.submittedAt,
         name: values.fullName ?? "",
         email: values.email ?? "",
@@ -50,8 +45,12 @@ export function SubmissionForm({ designId, designName }: { designId: string; des
         requiredByDate: values.requiredByDate ?? "",
       });
       router.push(`/studio/${designId}/submit/confirmation?${params.toString()}`);
-    } catch {
-      setSubmitError("Could not reach the server. Check your connection and try again.");
+    } catch (caught) {
+      setSubmitError(
+        caught instanceof ApiError
+          ? caught.message
+          : "Could not reach the server. Check your connection and try again.",
+      );
       setSubmitting(false);
     }
   }
@@ -119,6 +118,25 @@ export function SubmissionForm({ designId, designName }: { designId: string; des
           rows={3}
           className="mt-1 w-full border border-line-dark bg-transparent px-3 py-2 text-sm text-ivory focus:border-brass focus:outline-none"
         />
+      </div>
+
+      {/* §20.4 — recorded with a timestamp and terms version on submission. */}
+      <div className="border-t border-line-dark pt-5">
+        <label className="flex cursor-pointer items-start gap-3 text-sm text-ivory">
+          <input
+            type="checkbox"
+            checked={values.termsAccepted ?? false}
+            onChange={(e) => set("termsAccepted", e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-brass-bright"
+          />
+          <span className="leading-relaxed">
+            I understand this is a digital concept and final production appearance is subject to
+            VELVOREA technical review.
+          </span>
+        </label>
+        {errors.termsAccepted && (
+          <p className="mt-1 text-xs text-danger">{errors.termsAccepted}</p>
+        )}
       </div>
 
       {submitError && <p className="text-sm text-danger">{submitError}</p>}

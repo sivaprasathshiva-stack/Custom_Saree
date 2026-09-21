@@ -19,12 +19,20 @@ export interface SubmissionInput {
   quantity?: number;
   budgetRange?: string;
   comments?: string;
+  /**
+   * The §20.4 acknowledgement that this is a digital concept. Recorded with a
+   * timestamp and terms version on the submission row, so what the customer
+   * agreed to — and when — is reconstructable later.
+   */
+  termsAccepted?: boolean;
 }
 
 export interface ValidationResult {
   valid: boolean;
   errors: Partial<Record<keyof SubmissionInput, string>>;
 }
+
+import { MAX_SUBMISSION_QUANTITY, SUPPORTED_OCCASIONS } from "@/config/limits";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -57,7 +65,32 @@ export function validateSubmission(input: Partial<SubmissionInput>): ValidationR
   if (input.quantity !== undefined && input.quantity !== null) {
     if (!Number.isInteger(input.quantity) || input.quantity < 1) {
       errors.quantity = "Quantity must be a positive whole number.";
+    } else if (input.quantity > MAX_SUBMISSION_QUANTITY) {
+      errors.quantity = `For more than ${MAX_SUBMISSION_QUANTITY}, please contact us directly.`;
     }
+  }
+
+  if (input.occasion && !SUPPORTED_OCCASIONS.includes(input.occasion)) {
+    errors.occasion = "Choose one of the listed occasions.";
+  }
+
+  return { valid: Object.keys(errors).length === 0, errors };
+}
+
+/**
+ * Submission validation for the Textile Studio flow, which additionally
+ * requires the digital-concept acknowledgement (§20.4). Kept separate from
+ * `validateSubmission` so the older configurator route's contract is
+ * unchanged.
+ */
+export function validateStudioSubmission(
+  input: Partial<SubmissionInput>,
+): ValidationResult {
+  const result = validateSubmission(input);
+  const errors = { ...result.errors };
+
+  if (input.termsAccepted !== true) {
+    errors.termsAccepted = "Please confirm you understand this is a digital concept.";
   }
 
   return { valid: Object.keys(errors).length === 0, errors };

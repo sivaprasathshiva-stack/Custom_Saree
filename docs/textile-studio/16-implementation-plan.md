@@ -88,6 +88,40 @@ Per §82/§94: no phase starts before the prior phase's foundation is stable, te
   AI features, OTP/SMS phone verification, a real email provider, the full
   designer workspace beyond the read-only list, B2B/legal pages, payments.
 
+## Phase 3.9 — Production requirements build (supersedes Phases 4-14 below)
+
+**Status: built, not yet verified against a live project.** See
+`19-production-requirements-build.md` for the full record.
+
+A new build specification (`VELVOREA_TEXTILE_STUDIO_PRODUCTION_REQUIREMENTS`,
+93 sections) arrived after Phase 3.5 and redefines the product: the customer
+now uploads photographs of an existing saree, adds an image and up to 99
+characters, positions them on a canvas, and receives an AI-generated woven
+concept and a NILA drape. **The project owner confirmed this replaces the
+configurator** rather than sitting alongside it.
+
+This pass implemented: the §29 data model, §5 state machine, §15 AI provider
+abstraction with a deterministic mock set, the §32 durable job queue with a
+serverless tick worker, §34.5 upload security, §34.6 rate limiting, §50 audit
+logging, the §26 API surface, and the full Upload → Compose → Woven → Drape →
+Submit customer flow. The configurator's editor, pricing engine and
+manufacturability engine were retired (recoverable from git history);
+`studio-data.ts` was kept because the marketing site depends on it.
+
+**Blocking next step:** `supabase/schema.sql` must be re-run against the
+Supabase project — none of the new tables or functions exist there yet, so the
+flow cannot be exercised end to end until it is.
+
+### Phases 4-14 below: superseded, retained for history
+
+The phases below were written for the configurator's roadmap (repeat engine,
+region sub-systems, flat preview, entitlement/paywall). Phases 4, 5 and 8-11
+are substantially delivered in different form by the work above — object
+storage, a canvas, and the drape architecture all now exist, built to the new
+specification rather than these plans. Phases 6, 7, 12 and 13 describe a
+product that no longer exists. Do not resume them without re-reading
+`19-production-requirements-build.md` first.
+
 ## Phase 4 — Artwork + layer engine + object storage
 - `artwork_assets` table + Supabase Storage buckets (`12-storage-architecture.md`)
 - Server-side upload validation route handler
