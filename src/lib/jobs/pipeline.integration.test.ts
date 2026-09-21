@@ -1,6 +1,8 @@
 import { afterAll, describe, expect, it } from "vitest";
+import sharp from "sharp";
 import { addObject, createTextObject, emptyComposition } from "@/domain/composition";
 import { generationIdempotencyKey, hashComposition, isConceptId } from "@/domain/ids";
+import { resetProviderCache } from "@/lib/ai/registry";
 import { createAdminClient, isAdminConfigured } from "@/lib/supabase/admin";
 import { storeUploadedImage } from "@/lib/storage/design-assets";
 import {
@@ -25,19 +27,45 @@ import { runWorkerTick } from "./worker";
  * a machine with no credentials (the pattern rls-isolation.test.ts uses).
  */
 
+/**
+ * Pinned to the mock provider regardless of what .env.local carries.
+ *
+ * This test verifies OUR pipeline — storage, the transactional commit, the
+ * lifecycle advance. Letting it run against a real vendor would make it fail
+ * whenever that vendor is busy, cost money on every `npm test`, and send a
+ * developer's fixtures to a third party. The Gemini adapter is exercised
+ * separately and deliberately.
+ */
+process.env.AI_MODE = "MOCK";
+process.env.AI_MOCK_DELAY_MS = "0";
+resetProviderCache();
+
 const configured = isAdminConfigured();
 const describeIf = configured ? describe : describe.skip;
 
-/** A minimal but genuinely valid PNG, so upload validation passes for real. */
-function png(width: number, height: number): Uint8Array {
-  const bytes = new Uint8Array(24);
-  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
-  bytes.set([0, 0, 0, 13], 8);
-  bytes.set([0x49, 0x48, 0x44, 0x52], 12);
-  const view = new DataView(bytes.buffer);
-  view.setUint32(16, width);
-  view.setUint32(20, height);
-  return bytes;
+/**
+ * A real, decodable saree photograph.
+ *
+ * Deliberately not a hand-built 24-byte PNG header: that passes our own
+ * upload validation (which only reads the header) but a real vision model
+ * rejects it with a 400, so a header-only stub would test the pipeline
+ * against mock providers and silently fail against a live one.
+ */
+async function png(width: number, height: number): Promise<Uint8Array> {
+  const border = await sharp({
+    create: { width: Math.round(width * 0.08), height, channels: 3, background: { r: 173, g: 138, b: 78 } },
+  })
+    .png()
+    .toBuffer();
+
+  const buffer = await sharp({
+    create: { width, height, channels: 3, background: { r: 107, g: 39, b: 55 } },
+  })
+    .composite([{ input: border, left: 0, top: 0 }])
+    .png()
+    .toBuffer();
+
+  return new Uint8Array(buffer);
 }
 
 const createdUserIds: string[] = [];
@@ -84,7 +112,7 @@ describeIf("woven concept pipeline (live Supabase, mock AI)", () => {
       userId,
       designId: design.id,
       assetId,
-      bytes: png(1200, 1800),
+      bytes: await png(1200, 1800),
       declaredMimeType: "image/png",
     });
     createdStorageKeys.push(stored.storageKey);

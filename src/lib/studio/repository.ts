@@ -10,6 +10,7 @@
  * the layer RLS actually protects.
  */
 
+import { MAX_DESIGNS_PER_CUSTOMER } from "@/config/limits";
 import {
   type Composition,
   COMPOSITION_SCHEMA_VERSION,
@@ -54,8 +55,25 @@ export interface DesignRow {
  * because only the database can guarantee two simultaneous creations get
  * different numbers (§21).
  */
+export async function countDesigns(userId: string): Promise<number> {
+  const { count, error } = await admin()
+    .from("designs")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  if (error) throw new DomainError("INTERNAL_ERROR", { cause: error });
+  return count ?? 0;
+}
+
 export async function createDesign(params: { userId: string; name: string }): Promise<DesignRow> {
   const supabase = admin();
+
+  // Enforced server-side, not just hidden in the UI (§85 Rule 6).
+  if ((await countDesigns(params.userId)) >= MAX_DESIGNS_PER_CUSTOMER) {
+    throw new DomainError("DESIGN_LIMIT_REACHED", {
+      details: { maximum: MAX_DESIGNS_PER_CUSTOMER },
+    });
+  }
 
   const { data: conceptId, error: idError } = await supabase.rpc("allocate_concept_id");
   if (idError || typeof conceptId !== "string") {
@@ -103,6 +121,52 @@ export async function updateDesignStatus(
 
 export async function renameDesign(designId: string, name: string): Promise<void> {
   await admin().from("designs").update({ name, updated_at: new Date().toISOString() }).eq("id", designId);
+}
+
+/**
+ * Deletes a design and everything it owns.
+ *
+ * The database cascades the rows, but storage objects are not foreign keys —
+ * without this they would linger in the bucket forever, billed and orphaned
+ * (§35: deleted assets must not remain reachable).
+ */
+export async function deleteDesignCompletely(designId: string, userId: string): Promise<void> {
+  const supabase = admin();
+
+  const { data: design } = await supabase
+    .from("designs")
+    .select("id")
+    .eq("id", designId)
+    .eq("user_id", userId)
+    .maybeSingle<{ id: string }>();
+
+  if (!design) throw new DomainError("DESIGN_NOT_FOUND");
+
+  // Collect every storage key before the cascade removes the rows naming them.
+  const [{ data: assets }, { data: drapeAssets }] = await Promise.all([
+    supabase.from("design_assets").select("storage_key").eq("design_id", designId),
+    supabase
+      .from("drape_assets")
+      .select("storage_key, drapes!inner(design_id)")
+      .eq("drapes.design_id", designId),
+  ]);
+
+  const keys = [
+    ...(assets ?? []).map((row: { storage_key: string }) => row.storage_key),
+    ...(drapeAssets ?? []).map((row: { storage_key: string }) => row.storage_key),
+  ];
+
+  const { error } = await supabase.from("designs").delete().eq("id", designId);
+  if (error) throw new DomainError("INTERNAL_ERROR", { cause: error });
+
+  // After the row is gone: an orphaned object is a cleanup problem, whereas a
+  // failed delete that leaves the design listed is a correctness problem.
+  if (keys.length > 0) {
+    const { error: storageError } = await supabase.storage.from("design-assets").remove(keys);
+    if (storageError) {
+      logger.warn("Design deleted but some storage objects remain", { designId, storageError });
+    }
+  }
 }
 
 // --- assets ----------------------------------------------------------------

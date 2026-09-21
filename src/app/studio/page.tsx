@@ -1,43 +1,14 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { StudioFrame } from "@/components/studio/studio-frame";
 import { StudioSignInGate } from "@/components/studio/studio-sign-in-gate";
-import { customerStatusLabel } from "@/domain/design-state";
+import { MAX_DESIGNS_PER_CUSTOMER } from "@/config/limits";
+import { customerStatusLabel, isCustomerEditable } from "@/domain/design-state";
 import type { DesignStatus } from "@/domain/types";
-import { recordAudit } from "@/lib/audit/audit-log";
-import { createDesign } from "@/lib/studio/repository";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export const metadata = {
   title: "Textile Studio — VELVOREA",
 };
-
-/**
- * Welcome (§7.1).
- *
- * "Start Designing" is a server action rather than a client fetch, so it works
- * before hydration and without JavaScript — the first click into the Studio
- * should never depend on a bundle having loaded.
- */
-async function startDesigning() {
-  "use server";
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/studio");
-
-  const design = await createDesign({ userId: user.id, name: "Untitled design" });
-  await recordAudit({
-    action: "DESIGN_CREATED",
-    entityType: "design",
-    entityId: design.id,
-    actorUserId: user.id,
-  });
-
-  redirect(`/studio/${design.id}/upload`);
-}
 
 interface RecentDesign {
   id: string;
@@ -45,6 +16,14 @@ interface RecentDesign {
   status: DesignStatus;
   public_id: string | null;
   updated_at: string;
+}
+
+/** Where an existing design should resume, given how far it has got. */
+function resumeHref(design: RecentDesign): string {
+  if (!isCustomerEditable(design.status)) return `/studio/${design.id}/woven`;
+  return design.status === "WOVEN_CONCEPT"
+    ? `/studio/${design.id}/woven`
+    : `/studio/${design.id}/upload`;
 }
 
 export default async function StudioWelcomePage({
@@ -80,60 +59,81 @@ export default async function StudioWelcomePage({
     return <StudioSignInGate redirectTo={redirectTo} />;
   }
 
-  // §7.1 — if they have designs already, offer them rather than making them
-  // start from scratch every visit.
   const { data: recent } = await supabase
     .from("designs")
     .select("id, name, status, public_id, updated_at")
     .eq("user_id", user.id)
-    .neq("status", "ARCHIVED")
     .order("updated_at", { ascending: false })
-    .limit(3)
     .returns<RecentDesign[]>();
 
-  const hasDesigns = (recent?.length ?? 0) > 0;
+  const designs = recent ?? [];
+  const atLimit = designs.length >= MAX_DESIGNS_PER_CUSTOMER;
 
   return (
     <StudioFrame>
-      <div className="mx-auto max-w-2xl px-6 py-20 sm:py-28">
+      <div className="mx-auto max-w-2xl px-5 py-14 sm:px-6 sm:py-24">
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray">
           Textile Studio
         </p>
-        <h1 className="mt-4 font-display text-4xl leading-tight sm:text-5xl">
+        <h1 className="mt-4 font-display text-[2.5rem] leading-[1.08] sm:text-5xl">
           Create Your Saree
         </h1>
         <p className="mt-4 max-w-prose text-base leading-relaxed text-gray">
           Turn a saree you love into a new woven concept.
         </p>
 
-        <div className="mt-10 flex flex-wrap items-center gap-3">
-          <form action={startDesigning}>
-            <button
-              type="submit"
-              className="rounded-sm bg-ink px-7 py-3.5 text-sm font-semibold text-paper transition hover:bg-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+          {/* A plain navigation, not a form action: a link survives a redeploy
+              with a stale tab open, works before hydration, and lets the
+              browser show its own progress indicator while the design is
+              created. */}
+          {atLimit ? (
+            <span className="inline-flex cursor-not-allowed items-center justify-center rounded-sm bg-ink/30 px-7 py-3.5 text-sm font-semibold text-paper">
+              Start Designing
+            </span>
+          ) : (
+            <Link
+              href="/studio/new"
+              prefetch={false}
+              className="inline-flex items-center justify-center rounded-sm bg-ink px-7 py-3.5 text-sm font-semibold text-paper transition-colors hover:bg-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             >
               Start Designing
-            </button>
-          </form>
+            </Link>
+          )}
+
           <Link
             href="/studio/designs"
-            className="rounded-sm border border-line px-6 py-3.5 text-sm font-semibold transition hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="inline-flex items-center justify-center rounded-sm border border-line px-6 py-3.5 text-sm font-semibold transition-colors hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             My Designs
           </Link>
         </div>
 
-        {hasDesigns && (
-          <section className="mt-16 border-t border-line pt-8">
+        <p className="mt-4 text-xs text-gray">
+          {atLimit ? (
+            <>
+              You&apos;re using all {MAX_DESIGNS_PER_CUSTOMER} design slots.{" "}
+              <Link href="/studio/designs" className="underline underline-offset-2">
+                Delete one
+              </Link>{" "}
+              to start another.
+            </>
+          ) : (
+            `${designs.length} of ${MAX_DESIGNS_PER_CUSTOMER} design slots used.`
+          )}
+        </p>
+
+        {designs.length > 0 && (
+          <section className="mt-14 border-t border-line pt-8">
             <h2 className="font-mono text-[11px] uppercase tracking-[0.18em] text-gray">
               Pick up where you left off
             </h2>
-            <ul className="mt-4 divide-y divide-line">
-              {recent!.map((design) => (
+            <ul className="mt-3 divide-y divide-line">
+              {designs.slice(0, 3).map((design) => (
                 <li key={design.id}>
                   <Link
-                    href={`/studio/${design.id}/compose`}
-                    className="flex items-center justify-between gap-4 py-4 transition hover:text-accent"
+                    href={resumeHref(design)}
+                    className="flex items-center justify-between gap-4 py-4 transition-colors hover:text-accent"
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium">{design.name}</span>
@@ -143,7 +143,7 @@ export default async function StudioWelcomePage({
                         </span>
                       )}
                     </span>
-                    <span className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-gray">
+                    <span className="shrink-0 rounded-full bg-paper-dim px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-gray">
                       {customerStatusLabel(design.status)}
                     </span>
                   </Link>

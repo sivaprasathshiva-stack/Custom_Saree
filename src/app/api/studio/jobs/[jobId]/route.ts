@@ -48,7 +48,11 @@ export const GET = withAuthedRoute<Params>("GET /api/studio/jobs/[jobId]", async
       error: job.status === "FAILED" ? { code: job.error_code, message: job.error_message_safe } : null,
       createdAt: job.created_at,
       completedAt: job.completed_at,
-      pollAfterMs: terminal ? null : job.status === "QUEUED" ? 1500 : 2500,
+      // Tight enough that a finished concept appears promptly, loose enough
+      // that a waiting customer is not hammering the queue. Each poll also
+      // drives a worker tick, so a shorter interval genuinely speeds the job
+      // up rather than only checking on it more often.
+      pollAfterMs: terminal ? null : job.status === "QUEUED" ? 700 : 1200,
     },
     context.requestId,
   );

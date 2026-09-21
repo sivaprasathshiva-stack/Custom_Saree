@@ -27,6 +27,15 @@ function listFromEnv(name: string, fallback: readonly string[]): readonly string
 export const MIN_SAREE_IMAGES = intFromEnv("STUDIO_MIN_SAREE_IMAGES", 1);
 export const MAX_SAREE_IMAGES = intFromEnv("STUDIO_MAX_SAREE_IMAGES", 3);
 
+/**
+ * Live designs a customer may keep at once.
+ *
+ * Every design carries uploaded photographs, generated concepts and drape
+ * frames, so this is a storage-cost ceiling as much as a product decision.
+ * Archived and submitted designs still count — they still occupy storage.
+ */
+export const MAX_DESIGNS_PER_CUSTOMER = intFromEnv("STUDIO_MAX_DESIGNS_PER_CUSTOMER", 3);
+
 /** The customer's own idea artwork (§9.1). */
 export const MAX_IDEA_IMAGES = intFromEnv("STUDIO_MAX_IDEA_IMAGES", 1);
 

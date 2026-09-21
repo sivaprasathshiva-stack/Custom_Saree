@@ -98,6 +98,27 @@ export function apiPut<T>(url: string, body: unknown, signal?: AbortSignal): Pro
   });
 }
 
+export function apiPatch<T>(url: string, body: unknown, signal?: AbortSignal): Promise<T> {
+  return request<T>(url, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+    signal,
+  });
+}
+
+/** A 204 has no body, so this resolves to void rather than parsing one. */
+export async function apiDelete(url: string, signal?: AbortSignal): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(url, { method: "DELETE", credentials: "same-origin", signal });
+  } catch {
+    throw new ApiError(NETWORK_FAILURE, 0);
+  }
+  if (response.status === 204) return;
+  await parse<unknown>(response);
+}
+
 export function apiUpload<T>(url: string, form: FormData, signal?: AbortSignal): Promise<T> {
   // No content-type header: the browser must set the multipart boundary.
   return request<T>(url, { method: "POST", body: form, signal });

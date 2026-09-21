@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DesignsList, type DesignRow } from "@/components/studio/designs-list";
 import { StudioFrame } from "@/components/studio/studio-frame";
+import { MAX_DESIGNS_PER_CUSTOMER } from "@/config/limits";
 import type { DesignStatus } from "@/domain/types";
 import { signedUrlsFor } from "@/lib/storage/design-assets";
 import { createAdminClient, isAdminConfigured } from "@/lib/supabase/admin";
@@ -87,13 +88,15 @@ export default async function MyDesignsPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/studio");
 
-  // Everything except archived. The old filter looked for status = 'active',
-  // a value no design carries since the lifecycle migration.
+  // Every design, with no status filter. The slot limit counts them all, so
+  // hiding any would leave a customer blocked by a design they cannot see to
+  // delete. (The old filter looked for status = 'active', a value no design
+  // has carried since the lifecycle migration — which is why this page was
+  // permanently empty.)
   const { data } = await supabase
     .from("designs")
     .select("id, name, updated_at, status, public_id, current_version_id")
     .eq("user_id", user.id)
-    .neq("status", "ARCHIVED")
     .order("updated_at", { ascending: false })
     .returns<DesignRecord[]>();
 
@@ -111,15 +114,18 @@ export default async function MyDesignsPage() {
 
   return (
     <StudioFrame>
-      <div className="mx-auto max-w-5xl px-6 py-12">
+      <div className="mx-auto max-w-5xl px-5 py-10 sm:px-6 sm:py-12">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h1 className="font-display text-3xl">My Designs</h1>
-          <Link
-            href="/studio/new"
-            className="rounded-sm bg-ink px-5 py-2.5 text-sm font-semibold text-paper hover:bg-ink-soft"
-          >
-            Create Design
-          </Link>
+          {rows.length < MAX_DESIGNS_PER_CUSTOMER && (
+            <Link
+              href="/studio/new"
+              prefetch={false}
+              className="rounded-sm bg-ink px-5 py-2.5 text-sm font-semibold text-paper transition-colors hover:bg-ink-soft"
+            >
+              Create Design
+            </Link>
+          )}
         </div>
 
         <DesignsList initialDesigns={rows} />

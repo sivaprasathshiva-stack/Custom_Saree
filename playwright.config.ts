@@ -54,7 +54,10 @@ export default defineConfig({
     : {
         command: "npx next dev --port 3210",
         port: 3210,
-        reuseExistingServer: true,
+        // Never reuse: a server left running from ordinary development has
+        // whatever AI_MODE .env.local carries, and the suite must run against
+        // the mock provider rather than billing a real one.
+        reuseExistingServer: false,
         timeout: 180_000,
         env: { AI_MODE: "MOCK", AI_MOCK_DELAY_MS: "0" },
       },

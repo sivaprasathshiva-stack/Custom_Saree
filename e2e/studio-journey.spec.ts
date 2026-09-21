@@ -42,7 +42,9 @@ test("upload, compose, generate, drape, submit", async ({ page }) => {
   await page.goto("/studio");
   await expect(page.getByRole("heading", { name: /create your saree/i })).toBeVisible();
 
-  await page.getByRole("button", { name: /start designing/i }).click();
+  // A link, not a form action: an ordinary navigation survives a redeploy
+  // with a stale tab open, which a server action's id does not.
+  await page.getByRole("link", { name: /start designing/i }).click();
 
   // --- upload -------------------------------------------------------------
   await expect(page).toHaveURL(/\/studio\/[0-9a-f-]+\/upload/);

@@ -210,10 +210,10 @@ export function ComposePanel({
   const canGenerate = !isEmpty(composition) && busy === null;
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
+    <div className="mx-auto max-w-5xl px-5 pb-28 pt-8 sm:px-6 sm:pb-10 sm:pt-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl">Make it yours</h1>
+          <h1 className="font-display text-[2rem] leading-tight sm:text-3xl">Make it yours</h1>
           <p className="mt-2 text-sm text-gray">
             Move your image and words wherever you&apos;d like them on the saree.
           </p>
@@ -457,20 +457,24 @@ export function ComposePanel({
         </p>
       )}
 
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6">
-        <p className="text-xs text-gray">
-          {isEmpty(composition)
-            ? "Add an image or some words to continue."
-            : "Your design is saved automatically."}
-        </p>
-        <button
-          type="button"
-          onClick={generate}
-          disabled={!canGenerate}
-          className="rounded-sm bg-ink px-7 py-3.5 text-sm font-semibold text-paper transition enabled:hover:bg-ink-soft disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {busy === "generate" ? "Starting…" : "Create Woven Concept →"}
-        </button>
+      {/* Pinned on a phone: the sidebar stacks below a tall canvas, so an
+          in-flow action bar would sit far below the fold. */}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper/95 px-5 py-3 backdrop-blur sm:static sm:mt-10 sm:border-t sm:bg-transparent sm:px-0 sm:pt-6 sm:backdrop-blur-none">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
+          <p className="hidden text-xs text-gray sm:block">
+            {isEmpty(composition)
+              ? "Add an image or some words to continue."
+              : "Your design is saved automatically."}
+          </p>
+          <button
+            type="button"
+            onClick={generate}
+            disabled={!canGenerate}
+            className="ml-auto rounded-sm bg-ink px-6 py-3.5 text-sm font-semibold text-paper transition-colors enabled:hover:bg-ink-soft disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {busy === "generate" ? "Starting…" : "Create Woven Concept →"}
+          </button>
+        </div>
       </div>
     </div>
   );

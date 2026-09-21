@@ -17,11 +17,23 @@ const PROVIDER = "gemini";
 
 /**
  * Free tier: text and vision only. Image generation is paid-only on every
- * Gemini image model, which is why `imageModel` is configured separately and
- * defaults to off — see `isImageGenerationConfigured`.
+ * Gemini image model, which is why the image model is configured separately
+ * and defaults to off — see `isImageGenerationEnabled`.
+ *
+ * `gemini-3.5-flash` rather than the newer `gemini-3.8-flash`: measured
+ * against this project's key, 3.8 returned 503 "high demand" and 429 on two
+ * of three consecutive calls, while 3.5 returned valid structured JSON on
+ * every attempt. A customer's saree analysis failing because the newest model
+ * is busy is not a trade worth making.
  */
-export const GEMINI_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL ?? "gemini-3.8-flash";
+export const GEMINI_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL ?? "gemini-3.5-flash";
 export const GEMINI_IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL ?? "gemini-3.1-flash-image";
+
+/**
+ * The only output type the image models accept. Requesting image/png returns
+ * HTTP 400: "not supported for 'response_format.mime_type'".
+ */
+const IMAGE_OUTPUT_MIME = "image/jpeg";
 
 export function geminiApiKey(): string | null {
   const key = process.env.GEMINI_API_KEY?.trim();
@@ -60,10 +72,26 @@ interface InteractionResponse {
   steps?: Array<{ content?: Array<{ type?: string; text?: string; data?: string; mime_type?: string }> }>;
 }
 
+/**
+ * A free-tier quota refusal is reported as 429 with a zero limit, which looks
+ * exactly like ordinary throttling but will never succeed on retry. Detecting
+ * it is what stops a concept job burning its whole retry budget against a
+ * wall — §32.2: never retry a permanent failure.
+ */
+function isTierRefusal(body: string): boolean {
+  return /free tier|upgrade your tier|limit: 0|billing|not available|paid/i.test(body);
+}
+
 function classify(status: number, body: string): ProviderError {
   // 429 and 5xx are worth retrying; a malformed request or a billing refusal
   // will fail identically forever, so §32.2 says never retry them.
   if (status === 429) {
+    if (isTierRefusal(body)) {
+      return new ProviderError(
+        "This Gemini model is not available on the current plan. Enable billing on the API key to use image generation.",
+        { retryable: false, provider: PROVIDER, reason: "BILLING_REQUIRED" },
+      );
+    }
     return new ProviderError("Gemini rate limit reached.", {
       retryable: true,
       provider: PROVIDER,
@@ -84,9 +112,8 @@ function classify(status: number, body: string): ProviderError {
       reason: "AUTH",
     });
   }
-  // Billing refusals arrive as 400s mentioning billing or quota. Detecting
-  // them lets the operator see "enable billing" rather than a generic error.
-  if (/billing|quota|not available|paid/i.test(body)) {
+  // Billing refusals also arrive as 400s mentioning billing or quota.
+  if (isTierRefusal(body)) {
     return new ProviderError(
       "This Gemini model requires billing to be enabled on the API key.",
       { retryable: false, provider: PROVIDER, reason: "BILLING_REQUIRED" },
@@ -172,12 +199,14 @@ function readImage(response: InteractionResponse): { data: string; mimeType: str
   if (response.output_image?.data) {
     return {
       data: response.output_image.data,
-      mimeType: response.output_image.mime_type ?? "image/png",
+      mimeType: response.output_image.mime_type ?? IMAGE_OUTPUT_MIME,
     };
   }
+  // The live API does not populate the documented convenience fields, so the
+  // steps array is the real source, not a fallback.
   for (const step of response.steps ?? []) {
     for (const part of step?.content ?? []) {
-      if (part?.data) return { data: part.data, mimeType: part.mime_type ?? "image/png" };
+      if (part?.data) return { data: part.data, mimeType: part.mime_type ?? IMAGE_OUTPUT_MIME };
     }
   }
   return null;
@@ -245,7 +274,7 @@ export async function generateImage(params: {
       input: params.input,
       response_format: {
         type: "image",
-        mime_type: "image/png",
+        mime_type: IMAGE_OUTPUT_MIME,
         ...(params.aspectRatio ? { aspect_ratio: params.aspectRatio } : {}),
         ...(params.imageSize ? { image_size: params.imageSize } : {}),
       },

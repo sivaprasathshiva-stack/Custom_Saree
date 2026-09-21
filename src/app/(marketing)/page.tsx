@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
-import { ArchiveGrid } from "@/components/marketing/archive-grid";
 import { HeroSlider } from "@/components/marketing/hero-slider";
 import { materials, palette, borders } from "@/components/studio/studio-data";
 import { getMedia, MATERIAL_MEDIA_ID } from "@/lib/media-registry";
@@ -308,25 +307,6 @@ export default function Home() {
               Meet the weavers
             </Button>
           </div>
-        </div>
-      </section>
-
-      {/* From the archive */}
-      <section className="border-t border-line bg-ivory-deep">
-        <div className="mx-auto max-w-[1600px] px-6 py-28 md:px-10">
-          <SectionLabel>From the archive</SectionLabel>
-          <p className="mt-6 max-w-2xl font-display text-3xl leading-snug text-charcoal md:text-4xl">
-            Motifs and weave structures travel across centuries. VELVOREA&rsquo;s
-            material library draws on that history without claiming it.
-          </p>
-          <div className="mt-12">
-            <ArchiveGrid />
-          </div>
-          <p className="mt-8 max-w-xl text-sm text-stone">
-            Public-domain works shown for research and inspiration only, via The
-            Metropolitan Museum of Art&rsquo;s Open Access program. VELVOREA has no
-            affiliation with and does not claim to have made these objects.
-          </p>
         </div>
       </section>
 

@@ -91,30 +91,40 @@ export function UploadPanel({
     [designId],
   );
 
-  // Poll while analysis is in flight. Stops as soon as it settles, so an idle
-  // page makes no requests.
+  // Poll while analysis is in flight, stopping as soon as it settles so an
+  // idle page makes no requests.
+  //
+  // The loop deliberately does NOT depend on the analysis state it writes.
+  // An effect that restarts whenever its own result changes aborts its own
+  // in-flight request on every status transition, and under StrictMode that
+  // thrash can leave the page stuck on "Understanding your saree…" while the
+  // job has already finished. `photoCount` is the only real trigger: a new
+  // photograph re-runs analysis.
+  const photoCount = sareeAssets.length;
   useEffect(() => {
-    if (sareeAssets.length === 0) return;
-    if (analysis?.ready) return;
+    if (photoCount === 0) return;
 
     const controller = new AbortController();
-    let cancelled = false;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
 
     const tick = async () => {
+      if (stopped) return;
       const next = await refreshAnalysis(controller.signal);
-      if (cancelled) return;
-      if (!next?.ready && next?.status !== "FAILED") {
-        timer = setTimeout(tick, 1800);
-      }
+      if (stopped) return;
+
+      // Settled — nothing further to ask for.
+      if (next?.ready || next?.status === "FAILED") return;
+      timer = setTimeout(tick, 1500);
     };
 
-    let timer = setTimeout(tick, 400);
+    timer = setTimeout(tick, 300);
     return () => {
-      cancelled = true;
+      stopped = true;
       clearTimeout(timer);
       controller.abort();
     };
-  }, [sareeAssets.length, analysis?.ready, analysis?.status, refreshAnalysis]);
+  }, [photoCount, refreshAnalysis]);
 
   const uploadOne = useCallback(
     async (item: PendingUpload) => {
@@ -180,8 +190,10 @@ export function UploadPanel({
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="font-display text-3xl">Start with your saree</h1>
+    <div className="mx-auto max-w-3xl px-5 pb-28 pt-10 sm:px-6 sm:pb-12 sm:pt-12">
+      <h1 className="font-display text-[2rem] leading-tight sm:text-3xl">
+        Start with your saree
+      </h1>
       <p className="mt-3 max-w-prose text-sm leading-relaxed text-gray">
         Upload up to {MAX_SAREE_IMAGES} photographs of the saree you&apos;d like to customise. One
         is enough to begin.
@@ -199,9 +211,9 @@ export function UploadPanel({
           if (event.dataTransfer.files.length > 0) addFiles(event.dataTransfer.files);
         }}
         className={[
-          "mt-8 rounded-sm border border-dashed p-10 text-center transition",
-          dragging ? "border-ink bg-paper-dim" : "border-gray-light",
-          slotsLeft <= 0 ? "opacity-50" : "",
+          "mt-8 rounded-xl border-2 border-dashed px-6 py-12 text-center transition-colors",
+          dragging ? "border-ink bg-paper-dim" : "border-line hover:border-gray-light",
+          slotsLeft <= 0 ? "pointer-events-none opacity-50" : "",
         ].join(" ")}
       >
         <input
@@ -217,14 +229,24 @@ export function UploadPanel({
             event.target.value = "";
           }}
         />
+
+        <span
+          aria-hidden="true"
+          className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-paper-dim"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+            <path d="M12 16V4m0 0L7 9m5-5 5 5M4 20h16" />
+          </svg>
+        </span>
+
         <label
           htmlFor="saree-upload"
-          className="cursor-pointer text-sm font-semibold underline decoration-gray-light underline-offset-4 hover:decoration-ink"
+          className="mt-4 inline-block cursor-pointer rounded-sm bg-ink px-5 py-2.5 text-sm font-semibold text-paper transition-colors hover:bg-ink-soft"
         >
-          Add saree photo
+          Choose a photo
         </label>
-        <p className="mt-2 text-xs text-gray">Drag &amp; drop, or browse</p>
-        <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.15em] text-gray-light">
+        <p className="mt-3 text-xs text-gray">or drag and drop it here</p>
+        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.15em] text-gray-light">
           JPG · PNG · WebP
         </p>
       </div>
@@ -356,24 +378,25 @@ export function UploadPanel({
         </section>
       )}
 
-      <div className="mt-10 flex items-center justify-between gap-4 border-t border-line pt-6">
-        <p className="text-xs text-gray">
-          {sareeAssets.length} of {MAX_SAREE_IMAGES} photos added
-        </p>
-        <button
-          type="button"
-          disabled={!canContinue}
-          onClick={() => router.push(`/studio/${designId}/compose`)}
-          className="rounded-sm bg-ink px-6 py-3 text-sm font-semibold text-paper transition enabled:hover:bg-ink-soft disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Continue
-        </button>
+      {/* Pinned to the bottom of the viewport on a phone so Continue is always
+          reachable without scrolling past the thumbnails and the checklist. */}
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper/95 px-5 py-3 backdrop-blur sm:static sm:mt-10 sm:border-t sm:bg-transparent sm:px-0 sm:pt-6 sm:backdrop-blur-none">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
+          <p className="text-xs text-gray">
+            {canContinue
+              ? `${sareeAssets.length} of ${MAX_SAREE_IMAGES} photos added`
+              : "Add at least one photo to continue."}
+          </p>
+          <button
+            type="button"
+            disabled={!canContinue}
+            onClick={() => router.push(`/studio/${designId}/compose`)}
+            className="rounded-sm bg-ink px-6 py-3 text-sm font-semibold text-paper transition-colors enabled:hover:bg-ink-soft disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Continue
+          </button>
+        </div>
       </div>
-      {!canContinue && (
-        <p className="mt-2 text-right text-xs text-gray">
-          Add at least one photo of your saree to continue.
-        </p>
-      )}
     </div>
   );
 }
