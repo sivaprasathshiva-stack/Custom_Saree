@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo, Inter, IBM_Plex_Mono } from "next/font/google";
+import { Archivo, Inter, IBM_Plex_Mono, Cormorant_Garamond } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
@@ -17,6 +17,14 @@ const sans = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+});
+
+// Editorial serif for marketing headlines (home page first, rolled out per page).
+const serif = Cormorant_Garamond({
+  variable: "--font-serif",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
 });
 
 const mono = IBM_Plex_Mono({
@@ -39,7 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${display.variable} ${sans.variable} ${mono.variable} antialiased bg-ivory text-charcoal`}
+        className={`${display.variable} ${sans.variable} ${serif.variable} ${mono.variable} antialiased bg-ivory text-charcoal`}
       >
         <SiteLoader />
         <WebVitalsReporter />
