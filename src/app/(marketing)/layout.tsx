@@ -1,5 +1,6 @@
 import { SiteNav } from "@/components/layout/site-nav";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { RevealObserver } from "@/components/marketing/reveal-observer";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export default async function MarketingLayout({
@@ -31,6 +32,7 @@ export default async function MarketingLayout({
   return (
     <>
       <SiteNav accountLabel={accountLabel} />
+      <RevealObserver />
       <main>{children}</main>
       <SiteFooter />
     </>

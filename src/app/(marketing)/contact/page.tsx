@@ -25,19 +25,19 @@ const reasons = [
 export default function ContactPage() {
   return (
     <div className="bg-ivory">
-      <section className="border-b border-line px-6 py-20 md:px-10">
-        <div className="mx-auto max-w-[1600px]">
+      <section className="px-6 pb-16 pt-14 md:px-10 md:pb-24 md:pt-20">
+        <div className="mx-auto max-w-[1600px]" data-reveal>
           <BackButton className="mb-8" />
           <SectionLabel>Contact</SectionLabel>
-          <h1 className="mt-6 max-w-2xl font-display text-5xl leading-tight md:text-6xl">
+          <h1 className="mt-6 max-w-5xl font-serif text-[clamp(2.5rem,6vw,5.5rem)] leading-[1] tracking-[-0.025em] text-balance">
             Reach the studio directly.
           </h1>
-          <p className="mt-6 max-w-xl text-stone">
+          <p className="mt-8 max-w-xl text-lg text-pretty text-stone">
             We&rsquo;re a small team in Elampillai, Salem. Messages reach the people who
             actually make the sarees.
           </p>
 
-          <div className="mt-12 grid grid-cols-1 gap-px border border-line bg-line sm:grid-cols-3">
+          <div className="mt-12 grid grid-cols-1 gap-x-14 sm:grid-cols-3">
             {CONTACT_CHANNELS.map((channel) => (
               <a
                 key={channel.id}
@@ -45,15 +45,14 @@ export default function ContactPage() {
                 {...(channel.id === "email"
                   ? {}
                   : { target: "_blank", rel: "noopener noreferrer" })}
-                className="group flex flex-col gap-2 bg-ivory p-8 transition-colors hover:bg-ivory-deep"
+                className="group flex flex-col gap-2 border-t border-line py-8 transition-colors duration-300 hover:border-charcoal"
+                data-reveal
               >
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-stone">
-                  {channel.label}
-                </span>
-                <span className="font-display text-xl text-charcoal underline decoration-line underline-offset-4 group-hover:decoration-charcoal">
+                <span className="text-sm text-stone">{channel.label}</span>
+                <span className="font-serif text-2xl leading-tight md:text-3xl text-charcoal underline decoration-line underline-offset-4 group-hover:decoration-charcoal">
                   {channel.value}
                 </span>
-                <span className="text-sm leading-relaxed text-stone">{channel.note}</span>
+                <span className="leading-relaxed text-pretty text-stone">{channel.note}</span>
               </a>
             ))}
           </div>
@@ -72,11 +71,11 @@ export default function ContactPage() {
       </section>
 
       <section className="mx-auto max-w-[1600px] px-6 pb-20 md:px-10">
-        <div className="grid grid-cols-1 gap-px border border-line bg-line md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-14 md:grid-cols-3">
           {reasons.map((r) => (
-            <div key={r.title} className="flex flex-col gap-3 bg-ivory p-8">
-              <p className="font-display text-xl">{r.title}</p>
-              <p className="text-sm leading-relaxed text-stone">{r.body}</p>
+            <div key={r.title} className="flex flex-col gap-3 border-t border-line py-8 transition-colors duration-300 hover:border-charcoal" data-reveal>
+              <p className="font-serif text-2xl leading-tight md:text-3xl">{r.title}</p>
+              <p className="leading-relaxed text-pretty text-stone">{r.body}</p>
             </div>
           ))}
         </div>

@@ -83,17 +83,25 @@ body {
 /* Scroll reveal — only hidden when scripting is available, so the page
    is fully readable without JS. Transform + opacity only. */
 @media (scripting: enabled) {
-  .reveal {
+  .reveal,
+  [data-reveal] {
     opacity: 0;
     transform: translateY(28px);
     transition:
       opacity 900ms cubic-bezier(0.22, 1, 0.36, 1),
       transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .reveal[data-visible="true"] {
+  .reveal[data-visible="true"],
+  [data-reveal][data-visible="true"] {
     opacity: 1;
     transform: none;
   }
+  /* Stagger siblings in a grid or list without per-item props */
+  [data-reveal]:nth-child(2) { transition-delay: 70ms; }
+  [data-reveal]:nth-child(3) { transition-delay: 140ms; }
+  [data-reveal]:nth-child(4) { transition-delay: 210ms; }
+  [data-reveal]:nth-child(5) { transition-delay: 280ms; }
+  [data-reveal]:nth-child(n + 6) { transition-delay: 350ms; }
 }
 
 /* Slow horizontal drift for the material-name strip */

@@ -29,14 +29,14 @@ export function PageIntro({
 }) {
   return (
     <div className="bg-ivory">
-      <section className="border-b border-line px-6 py-20 md:px-10">
-        <div className="mx-auto max-w-[1600px]">
+      <section className="px-6 pb-16 pt-14 md:px-10 md:pb-24 md:pt-20">
+        <div className="mx-auto max-w-[1600px]" data-reveal>
           <BackButton className="mb-8" />
           <SectionLabel>{eyebrow}</SectionLabel>
-          <h1 className="mt-6 max-w-2xl font-display text-5xl leading-tight md:text-6xl">
+          <h1 className="mt-6 max-w-5xl font-serif text-[clamp(2.5rem,6vw,5.5rem)] leading-[1] tracking-[-0.025em] text-balance">
             {title}
           </h1>
-          <p className="mt-6 max-w-xl text-stone">{description}</p>
+          <p className="mt-8 max-w-xl text-lg text-pretty text-stone">{description}</p>
           {cta && (
             <div className="mt-9">
               <Button href={cta.href} variant="primary">

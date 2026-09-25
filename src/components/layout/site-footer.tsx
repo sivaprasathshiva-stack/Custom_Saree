@@ -91,7 +91,7 @@ export function SiteFooter() {
                 height={44}
                 className="h-10 w-10 object-contain"
               />
-              <p className="font-display text-2xl text-ivory">VELVOREA</p>
+              <p className="font-serif text-3xl font-medium tracking-[0.04em] text-ivory">VELVOREA</p>
             </div>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-stone-light/80">
               A digital studio for designing bespoke silk sarees, physically manufactured

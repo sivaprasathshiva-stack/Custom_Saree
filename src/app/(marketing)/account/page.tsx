@@ -45,11 +45,13 @@ export default async function AccountPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-24">
       <BackButton className="mb-8" fallbackHref="/" />
-      <p className="font-mono text-xs uppercase tracking-[0.15em] text-gray">Account</p>
-      <h1 className="mt-2 font-display text-3xl text-ink">{user.email}</h1>
+      <p className="text-sm text-gray">Account</p>
+      <h1 className="mt-2 font-serif text-4xl leading-tight tracking-[-0.02em] text-ink md:text-5xl">
+        {user.email}
+      </h1>
 
       <section className="mt-12">
-        <h2 className="font-display text-xl text-ink">Saved designs</h2>
+        <h2 className="font-serif text-2xl text-ink">Saved designs</h2>
         {designs && designs.length > 0 ? (
           <ul className="mt-4 divide-y divide-line border-y border-line">
             {designs.map((d) => (
@@ -78,7 +80,7 @@ export default async function AccountPage() {
       </section>
 
       <section className="mt-12 border-t border-line pt-8">
-        <h2 className="font-display text-xl text-ink">Contact details</h2>
+        <h2 className="font-serif text-2xl text-ink">Contact details</h2>
         <p className="mt-2 text-sm text-gray">
           Required before submitting a design to VELVOREA for production review.
         </p>
@@ -104,7 +106,7 @@ export default async function AccountPage() {
       </form>
 
       <section className="mt-12 border-t border-line pt-8">
-        <h2 className="font-display text-xl text-ink">Danger zone</h2>
+        <h2 className="font-serif text-2xl text-ink">Danger zone</h2>
         <div className="mt-4">
           <DeleteAccountButton />
         </div>

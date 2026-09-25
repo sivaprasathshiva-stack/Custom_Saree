@@ -17,14 +17,14 @@ const stages = [
 export default function OrdersPage() {
   return (
     <div className="bg-ivory">
-      <section className="border-b border-line px-6 py-20 md:px-10">
-        <div className="mx-auto max-w-[1600px]">
+      <section className="px-6 pb-16 pt-14 md:px-10 md:pb-24 md:pt-20">
+        <div className="mx-auto max-w-[1600px]" data-reveal>
           <BackButton className="mb-8" />
           <SectionLabel>Orders</SectionLabel>
-          <h1 className="mt-6 max-w-2xl font-display text-5xl leading-tight md:text-6xl">
+          <h1 className="mt-6 max-w-5xl font-serif text-[clamp(2.5rem,6vw,5.5rem)] leading-[1] tracking-[-0.025em] text-balance">
             Track every order from quote to delivery.
           </h1>
-          <p className="mt-6 max-w-xl text-stone">
+          <p className="mt-8 max-w-xl text-lg text-pretty text-stone">
             You have no orders yet. Once a Studio design moves into production, it
             appears here with live status against the stages below.
           </p>
@@ -37,12 +37,12 @@ export default function OrdersPage() {
       </section>
 
       <section className="mx-auto max-w-[1600px] px-6 pb-20 md:px-10">
-        <ol className="grid grid-cols-1 gap-px border border-line bg-line md:grid-cols-2 lg:grid-cols-4">
+        <ol className="grid grid-cols-1 gap-x-14 md:grid-cols-2 lg:grid-cols-4">
           {stages.map((s, i) => (
-            <li key={s.title} className="flex flex-col gap-3 bg-ivory p-8">
-              <span className="font-mono text-xs text-stone">{String(i + 1).padStart(2, "0")}</span>
-              <p className="font-display text-xl">{s.title}</p>
-              <p className="text-sm leading-relaxed text-stone">{s.body}</p>
+            <li key={s.title} className="flex flex-col gap-3 border-t border-line py-8 transition-colors duration-300 hover:border-charcoal" data-reveal>
+              <span className="font-serif text-2xl italic tabular-nums text-stone">{String(i + 1).padStart(2, "0")}</span>
+              <p className="font-serif text-2xl leading-tight md:text-3xl">{s.title}</p>
+              <p className="leading-relaxed text-pretty text-stone">{s.body}</p>
             </li>
           ))}
         </ol>

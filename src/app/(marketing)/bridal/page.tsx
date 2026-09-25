@@ -15,14 +15,14 @@ export default function BridalPage() {
 
   return (
     <div className="bg-ivory">
-      <section className="border-b border-line px-6 py-20 md:px-10">
-        <div className="mx-auto max-w-[1600px]">
+      <section className="px-6 pb-16 pt-14 md:px-10 md:pb-24 md:pt-20">
+        <div className="mx-auto max-w-[1600px]" data-reveal>
           <BackButton className="mb-8" />
           <SectionLabel>Bridal</SectionLabel>
-          <h1 className="mt-6 max-w-2xl font-display text-5xl leading-tight md:text-6xl">
+          <h1 className="mt-6 max-w-5xl font-serif text-[clamp(2.5rem,6vw,5.5rem)] leading-[1] tracking-[-0.025em] text-balance">
             A saree built for one day, made to be worn for many more.
           </h1>
-          <p className="mt-6 max-w-xl text-stone">
+          <p className="mt-8 max-w-xl text-lg text-pretty text-stone">
             Start from a bridal-appropriate configuration — Kanchipuram silk, temple
             border, premium zari — then make it yours: palette, motif, pallu and
             border are all still fully editable in the Studio. Woven at our facility
@@ -54,19 +54,19 @@ export default function BridalPage() {
           <SectionLabel>What the preset sets</SectionLabel>
           <div className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-4">
             <div>
-              <p className="font-display text-xl">Material</p>
+              <p className="font-serif text-2xl leading-tight md:text-3xl">Material</p>
               <p className="mt-2 text-sm text-stone">Kanchipuram Pure Silk — structured drape, high sheen.</p>
             </div>
             <div>
-              <p className="font-display text-xl">Border</p>
+              <p className="font-serif text-2xl leading-tight md:text-3xl">Border</p>
               <p className="mt-2 text-sm text-stone">Temple Geometry, 6 cm — the widest of the current border set.</p>
             </div>
             <div>
-              <p className="font-display text-xl">Pallu</p>
+              <p className="font-serif text-2xl leading-tight md:text-3xl">Pallu</p>
               <p className="mt-2 text-sm text-stone">Temple Geometry Pallu, matching the border motif.</p>
             </div>
             <div>
-              <p className="font-display text-xl">Zari</p>
+              <p className="font-serif text-2xl leading-tight md:text-3xl">Zari</p>
               <p className="mt-2 text-sm text-stone">Premium zari — the highest-density option, reviewed for manufacturability before production.</p>
             </div>
           </div>
@@ -79,7 +79,7 @@ export default function BridalPage() {
       </section>
 
       <section className="border-t border-line px-6 py-24 text-center md:px-10">
-        <p className="mx-auto max-w-xl font-display text-3xl leading-snug text-charcoal md:text-4xl">
+        <p className="mx-auto max-w-xl font-serif text-4xl leading-[1.1] tracking-[-0.02em] text-balance text-charcoal md:text-5xl">
           Design your wedding saree with the same precision as the rest of the day.
         </p>
         <div className="mt-9 flex justify-center">
